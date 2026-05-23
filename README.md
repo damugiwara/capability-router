@@ -14,60 +14,21 @@ Use Capability Router for this task: fix a failing React checkout button test by
 
 The router scans available Codex capabilities, builds a compact local registry, ranks the task against that registry, applies soft masking rules, and returns only the top candidates.
 
-## Install In Codex
+## Quick Start
 
-### Option 1: Install From The Repo Marketplace
+See [USAGE.md](USAGE.md) for full installation instructions, including repo marketplace and personal local plugin setup.
 
-1. Clone this repository.
-
-   ```powershell
-   git clone https://github.com/damugiwara/capability-router.git
-   cd capability-router
-   ```
-
-2. In Codex, add or open the repo marketplace file:
-
-   ```text
-   .agents/plugins/marketplace.json
-   ```
-
-3. Install or enable `capability-router` from that marketplace.
-
-4. Restart Codex or reload plugins so skills, MCP tools, and slash commands are indexed.
-
-5. Type `/capability` in the composer. You should see the slash command.
-
-### Option 2: Install As A Personal Local Plugin
-
-Copy the plugin to your personal plugin folder:
-
-```powershell
-New-Item -ItemType Directory -Force -Path "$HOME\plugins" | Out-Null
-Copy-Item -Recurse -Force ".\plugins\capability-router" "$HOME\plugins\capability-router"
-```
-
-Add this plugin entry to:
+After installing, invoke the router with:
 
 ```text
-$HOME\.agents\plugins\marketplace.json
+/capability fix a failing React checkout button test by inspecting local files and running the focused test
 ```
 
-```json
-{
-  "name": "capability-router",
-  "source": {
-    "source": "local",
-    "path": "./plugins/capability-router"
-  },
-  "policy": {
-    "installation": "AVAILABLE",
-    "authentication": "ON_INSTALL"
-  },
-  "category": "Productivity"
-}
-```
+or:
 
-Restart Codex or reload plugins after updating the marketplace.
+```text
+Use Capability Router for this task: fix a failing React checkout button test by inspecting local files and running the focused test.
+```
 
 ## Repository Layout
 
@@ -96,12 +57,12 @@ The plugin root is `plugins/capability-router`. The repo-local marketplace entry
 
 ## Slash Commands
 
-The plugin includes two command files:
+Capability Router includes two slash commands:
 
 - `/capability`
 - `/capability-router`
 
-Use either command with a task argument:
+Use either command with a task argument. Full usage examples are in [USAGE.md](USAGE.md).
 
 ```text
 /capability fix a failing React checkout button test by inspecting local files and running the focused test
