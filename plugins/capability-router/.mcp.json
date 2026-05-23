@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "capability-router": {
+      "command": "node",
+      "args": ["./mcp/server.mjs"],
+      "env": {
+        "CAPABILITY_ROUTER_ROOTS": "%USERPROFILE%/.codex;%USERPROFILE%/.agents;."
+      }
+    }
+  }
+}

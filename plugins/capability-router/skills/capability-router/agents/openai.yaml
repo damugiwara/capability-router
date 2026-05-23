@@ -1,0 +1,3 @@
+display_name: Capability Router
+short_description: Route tasks to relevant Codex capabilities with compact context.
+default_prompt: Use Capability Router to choose the best capability for this task.

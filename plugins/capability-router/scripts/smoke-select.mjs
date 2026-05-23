@@ -1,0 +1,21 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { refreshRegistry } from "../src/indexer.mjs";
+import { selectCapabilities } from "../src/selector.mjs";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const pluginRoot = path.resolve(__dirname, "..");
+const registry = await refreshRegistry({
+  roots: [pluginRoot],
+  pluginRoot,
+  cacheDir: path.join(pluginRoot, "data"),
+  includeBuiltins: true
+});
+const result = await selectCapabilities({
+  request: process.argv.slice(2).join(" ") || "Research this Wikipedia page and summarize it",
+  records: registry.records,
+  topK: 3
+});
+
+console.log(JSON.stringify(result, null, 2));

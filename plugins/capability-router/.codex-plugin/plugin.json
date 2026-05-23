@@ -1,0 +1,33 @@
+{
+  "name": "capability-router",
+  "version": "0.1.0",
+  "description": "Route Codex tasks to relevant tools, skills, and plugins using a compact capability index.",
+  "author": {
+    "name": "Vansh",
+    "email": "vansh@example.com",
+    "url": "https://example.com"
+  },
+  "homepage": "https://example.com/capability-router",
+  "repository": "https://example.com/capability-router",
+  "license": "MIT",
+  "keywords": ["codex", "tools", "skills", "routing", "rag", "mcp"],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Capability Router",
+    "shortDescription": "Select relevant tools and skills with less context.",
+    "longDescription": "Indexes installed Codex capabilities and exposes MCP tools that rank, mask, explain, and refresh tool/skill/plugin recommendations.",
+    "developerName": "Vansh",
+    "category": "Productivity",
+    "capabilities": ["Interactive"],
+    "websiteURL": "https://example.com/capability-router",
+    "privacyPolicyURL": "https://example.com/privacy",
+    "termsOfServiceURL": "https://example.com/terms",
+    "defaultPrompt": [
+      "Use Capability Router for this task.",
+      "Route this task to the best tool.",
+      "Explain which capability fits this request."
+    ],
+    "brandColor": "#2563EB"
+  }
+}

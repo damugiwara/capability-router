@@ -1,0 +1,15 @@
+{
+  "name": "capability-router",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "capability-router-mcp": "./mcp/server.mjs"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "smoke": "node scripts/smoke-select.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

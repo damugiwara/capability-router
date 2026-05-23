@@ -1,0 +1,44 @@
+[
+  {
+    "id": "tool:web.open",
+    "kind": "tool",
+    "name": "web.open",
+    "description": "Open a public web page or URL and read content for source-grounded answers.",
+    "capabilities": ["network", "web", "research"]
+  },
+  {
+    "id": "tool:web.search_query",
+    "kind": "tool",
+    "name": "web.search_query",
+    "description": "Search the internet when the user asks for current, recent, external, or source-attributed information.",
+    "capabilities": ["network", "web", "search", "research"]
+  },
+  {
+    "id": "tool:functions.shell_command",
+    "kind": "tool",
+    "name": "functions.shell_command",
+    "description": "Run PowerShell commands for local filesystem inspection, tests, builds, and command-line tools.",
+    "capabilities": ["filesystem", "shell", "execution"]
+  },
+  {
+    "id": "tool:functions.apply_patch",
+    "kind": "tool",
+    "name": "functions.apply_patch",
+    "description": "Edit local files using patch hunks for precise code changes.",
+    "capabilities": ["filesystem", "editing"]
+  },
+  {
+    "id": "tool:image_gen.imagegen",
+    "kind": "tool",
+    "name": "image_gen.imagegen",
+    "description": "Generate or edit raster images from prompts or provided images.",
+    "capabilities": ["image", "generation", "editing"]
+  },
+  {
+    "id": "tool:functions.update_plan",
+    "kind": "tool",
+    "name": "functions.update_plan",
+    "description": "Track multi-step task progress with a visible plan checklist.",
+    "capabilities": ["planning", "status"]
+  }
+]
