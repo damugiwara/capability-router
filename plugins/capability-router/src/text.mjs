@@ -43,8 +43,8 @@ export function inferCapabilities(text) {
     ["network", /\b(web|internet|url|website|wikipedia|browser|search|http|https|online|current|latest)\b/],
     ["web", /\b(web|internet|url|website|wikipedia|search|http|https|online|page|citation|citations|source|sources)\b/],
     ["browser", /\b(browser|click|screenshot|page|dom|localhost)\b/],
-    ["filesystem", /\b(file|folder|directory|repo|code|edit|patch|test|build|shell|terminal)\b/],
-    ["editing", /\b(edit|modify|patch|write|create|change|fix|implement)\b/],
+    ["filesystem", /\b(file|files|folder|directory|repo|project|source|code|edit|patch|test|build|shell|terminal)\b/],
+    ["editing", /\b(edit|modify|patch|write|create|change|fix|repair|implement)\b/],
     ["planning", /\b(plan|break down|roadmap|steps|checklist)\b/],
     ["image", /\b(image|picture|photo|generate|edit image|logo)\b/],
     ["database", /\b(database|sql|postgres|supabase|table|query)\b/],
@@ -78,7 +78,7 @@ function scoreIntent(query, record, inferred) {
     boost += source.includes("search") || source.includes("find") ? 3 : 4;
   }
 
-  if (/\b(edit|modify|patch|fix|implement)\b/.test(source)) {
+  if (/\b(edit|modify|patch|fix|repair|implement|source code)\b/.test(source)) {
     if (record.name === "functions.apply_patch") boost += 3;
     if (record.name === "functions.shell_command") boost += 1;
   }

@@ -48,6 +48,8 @@ Use Capability Router for this task: fix a failing React checkout button test by
 |   |   `-- smoke-select.mjs
 |   |-- skills/capability-router/SKILL.md
 |   |-- src/
+|   |   |-- embeddings.mjs
+|   |   `-- vector-store.mjs
 |   `-- test/
 |-- USAGE.md
 `-- TODO.md
@@ -81,21 +83,23 @@ If a command does not appear immediately in Codex, restart the Codex app or relo
    - plugin manifests from `.codex-plugin/plugin.json`
    - bundled known Codex tool metadata from `data/builtin-capabilities.json`
 4. The scanner normalizes each item into a compact capability record.
-5. The selector scores the user request against capability names, descriptions, inferred intent tags, and task-specific boosts.
-6. The policy layer applies soft masking constraints such as disallowed network access.
-7. The MCP server returns only the top relevant candidates, confidence scores, reasons, and context-savings metadata.
+5. The local embedding layer turns capability records and the user request into deterministic hashed vectors.
+6. The vector store persists capability vectors in `data/vectors.json` and retrieves nearest matches with cosine similarity.
+7. The selector combines vector similarity with lexical scoring, inferred intent tags, and task-specific boosts.
+8. The policy layer applies soft masking constraints such as disallowed network access.
+9. The MCP server returns only the top relevant candidates, confidence scores, reasons, and context-savings metadata.
 
 ## Why It Reduces Token Usage
 
 The traditional approach is to make many tool, skill, and plugin descriptions available in the model context so the model can choose directly. That is simple, but expensive: every capability description consumes prompt/context space.
 
-Capability Router keeps the full catalog outside the main prompt in a local registry. At task time it retrieves only the most relevant few records.
+Capability Router keeps the full catalog outside the main prompt in a local registry and local vector store. At task time it retrieves only the most relevant few records.
 
 Measured in this workspace with 203 indexed capabilities:
 
 | Task | Traditional Context | Router Context | Reduction |
 |---|---:|---:|---:|
-| React checkout button test fix | ~19,408 estimated tokens | ~390 estimated tokens | ~97.99% |
+| React checkout button test fix | ~19,432 estimated tokens | ~434 estimated tokens | ~97.77% |
 | Local code-edit task | ~19,399 estimated tokens | ~395 estimated tokens | ~97.96% |
 
 These are deterministic payload estimates from `scripts/benchmark-context.mjs`, not hidden Codex internal prompt accounting. They measure the serialized capability context that would be needed by each approach.
@@ -103,8 +107,8 @@ These are deterministic payload estimates from `scripts/benchmark-context.mjs`, 
 ## Current Limitations
 
 - Soft masking only: the router can recommend or exclude capabilities, but cannot physically remove Codex-native tools from the model unless Codex exposes a hard tool-masking hook.
-- Practical caching only: the router caches metadata, file hashes, request rankings, and registry output. It cannot access transformer-level KV cache inside Codex.
-- Retrieval is dependency-free lexical scoring in this MVP. A future version can add embeddings for stronger semantic RAG.
+- Practical caching only: the router caches metadata, file hashes, local vectors, request rankings, and registry output. It cannot access transformer-level KV cache inside Codex.
+- Local embeddings are dependency-free hashed vectors, not transformer embeddings. Future versions can add optional hosted or local model embeddings for stronger semantic RAG.
 
 ## Development
 

@@ -9,7 +9,7 @@ Capability Router is a Codex plugin that indexes available tools, skills, and pl
 - `capability_router.list_capabilities`: inspect indexed capabilities
 - `capability_router.explain`: explain a routing recommendation
 
-The router uses metadata retrieval, policy filtering, and local caches to reduce how much capability context needs to be loaded for a task.
+The router uses metadata retrieval, local hashed embeddings, vector search, policy filtering, and local caches to reduce how much capability context needs to be loaded for a task.
 
 ## Install
 
@@ -60,6 +60,16 @@ The plugin includes:
 
 The command definitions live in `commands/` and include explicit `name:` frontmatter so Codex can index them.
 
+## Local Embeddings And Vectors
+
+The plugin uses dependency-free local embeddings:
+
+- `src/embeddings.mjs` converts task/capability text into deterministic hashed vectors.
+- `src/vector-store.mjs` persists vectors in `data/vectors.json`.
+- `src/selector.mjs` combines vector similarity with lexical scoring and intent boosts.
+
+No hosted embedding API key or external vector database is required.
+
 ## Test
 
 ```powershell
@@ -70,4 +80,4 @@ node plugins/capability-router/scripts/benchmark-context.mjs "Fix a failing Reac
 
 ## Limitations
 
-This plugin performs soft masking and cache-backed retrieval. It cannot force Codex to hide native tools, and it cannot access transformer-level KV cache unless Codex exposes such a runtime hook.
+This plugin performs soft masking and cache-backed local vector retrieval. It cannot force Codex to hide native tools, and it cannot access transformer-level KV cache unless Codex exposes such a runtime hook.

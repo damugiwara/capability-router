@@ -5,9 +5,11 @@ import path from "node:path";
 import test from "node:test";
 
 import { CacheStore } from "../src/cache.mjs";
+import { embedText, cosineSimilarity } from "../src/embeddings.mjs";
 import { refreshRegistry } from "../src/indexer.mjs";
 import { applyPolicy } from "../src/policy.mjs";
 import { selectCapabilities } from "../src/selector.mjs";
+import { refreshVectorStore, searchVectorStore } from "../src/vector-store.mjs";
 
 async function makeFixture() {
   const root = await mkdtemp(path.join(tmpdir(), "capability-router-"));
@@ -124,6 +126,81 @@ test("applyPolicy masks capabilities that violate user constraints", () => {
 
   assert.deepEqual(filtered.allowed.map((record) => record.name), ["local-files"]);
   assert.match(filtered.maskedOutSummary, /network/);
+});
+
+test("embedText creates deterministic normalized local vectors", () => {
+  const first = embedText("edit local source files with patch hunks", { dimensions: 64 });
+  const second = embedText("edit local source files with patch hunks", { dimensions: 64 });
+  const unrelated = embedText("generate a product image", { dimensions: 64 });
+
+  assert.equal(first.length, 64);
+  assert.deepEqual(first, second);
+  assert.ok(cosineSimilarity(first, second) > 0.99);
+  assert.ok(cosineSimilarity(first, unrelated) < 0.9);
+});
+
+test("vector store persists local embeddings and retrieves semantic capability matches", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "capability-vectors-"));
+  const vectorFile = path.join(root, "vectors.json");
+  const records = [
+    {
+      id: "tool:functions.apply_patch",
+      kind: "tool",
+      name: "functions.apply_patch",
+      description: "Edit local files using patch hunks for precise code changes.",
+      capabilities: ["filesystem", "editing"]
+    },
+    {
+      id: "tool:image_gen.imagegen",
+      kind: "tool",
+      name: "image_gen.imagegen",
+      description: "Generate or edit raster images from prompts.",
+      capabilities: ["image", "generation"]
+    }
+  ];
+
+  await refreshVectorStore({ records, vectorFile, dimensions: 64 });
+  const search = await searchVectorStore({
+    request: "repair a source file by changing code",
+    records,
+    vectorFile,
+    topK: 1,
+    dimensions: 64
+  });
+
+  assert.equal(search.results[0].record.name, "functions.apply_patch");
+  assert.ok(search.results[0].vectorScore > 0);
+});
+
+test("selectCapabilities can use local vector retrieval and reports vector mode", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "capability-vector-select-"));
+  const records = [
+    {
+      id: "tool:functions.apply_patch",
+      kind: "tool",
+      name: "functions.apply_patch",
+      description: "Edit local files using patch hunks for precise code changes.",
+      capabilities: ["filesystem", "editing"]
+    },
+    {
+      id: "tool:web.search_query",
+      kind: "tool",
+      name: "web.search_query",
+      description: "Search the internet for current external information.",
+      capabilities: ["network", "web", "search"]
+    }
+  ];
+
+  const result = await selectCapabilities({
+    request: "repair source code in this project",
+    records,
+    topK: 1,
+    vectorFile: path.join(root, "vectors.json")
+  });
+
+  assert.equal(result.recommended[0].name, "functions.apply_patch");
+  assert.equal(result.retrieval.mode, "hybrid-vector");
+  assert.equal(result.contextSavings.vectorCandidatesConsidered, 2);
 });
 
 test("CacheStore avoids rewriting unchanged registry records by file hash", async () => {

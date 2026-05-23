@@ -16,17 +16,19 @@ This file tracks future work for reducing or removing current Codex-native limit
 - [ ] If exposed, add stable prompt-prefix caching for capability instructions.
 - [ ] If not exposed, keep improving practical substitutes:
   - [ ] registry cache
-  - [ ] embedding cache
+  - [x] local vector cache
+  - [ ] hosted/model embedding cache
   - [ ] retrieval result cache
   - [ ] ranking cache
   - [ ] explanation cache
 
 ## Stronger RAG
 
-- [ ] Add optional embedding-based retrieval.
-- [ ] Support local embedding providers for no-extra-API-cost usage.
+- [x] Add dependency-free local embedding-based retrieval.
+- [x] Store local vectors in a small JSON vector store.
+- [ ] Support transformer-based local embedding providers for stronger no-extra-API-cost usage.
 - [ ] Add an adapter for hosted embedding APIs.
-- [ ] Store vectors in SQLite or a small local vector index.
+- [ ] Store vectors in SQLite or a small local vector index if the capability catalog grows beyond JSON scale.
 - [ ] Benchmark lexical retrieval versus embedding retrieval.
 
 ## Better Capability Discovery
@@ -54,4 +56,3 @@ This file tracks future work for reducing or removing current Codex-native limit
 - [ ] Add versioned zip artifacts.
 - [ ] Add installation screenshots or Codex app deeplinks if the platform supports stable plugin install URLs.
 - [ ] Add a changelog once there is more than one release.
-

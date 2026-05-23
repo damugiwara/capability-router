@@ -1,6 +1,7 @@
 import { CacheStore, stableHash } from "./cache.mjs";
 import { applyPolicy } from "./policy.mjs";
 import { scoreText } from "./text.mjs";
+import { capabilityHash, searchVectorStore } from "./vector-store.mjs";
 
 function confidenceFromScore(score, bestScore) {
   if (score <= 0) return 0;
@@ -8,19 +9,52 @@ function confidenceFromScore(score, bestScore) {
   return Number(Math.min(0.98, 0.35 + relative * 0.55).toFixed(2));
 }
 
-export async function selectCapabilities({ request, records, constraints = {}, topK = 5, cacheFile = null }) {
+export async function selectCapabilities({
+  request,
+  records,
+  constraints = {},
+  topK = 5,
+  cacheFile = null,
+  vectorFile = null,
+  vectorDimensions = 256
+}) {
   const cache = cacheFile ? new CacheStore(cacheFile) : null;
-  const key = stableHash({ request, recordIds: records.map((record) => record.id).sort(), constraints, topK });
+  const key = stableHash({
+    request,
+    records: records.map((record) => [record.id, capabilityHash(record)]).sort(),
+    constraints,
+    topK,
+    vectorFile: Boolean(vectorFile),
+    vectorDimensions
+  });
   if (cache) {
     const cached = await cache.getRequest(key);
     if (cached) return { ...cached, cache: { hit: true } };
   }
 
   const policy = applyPolicy(records, constraints);
+
+  const vectorSearch = vectorFile
+    ? await searchVectorStore({
+        request,
+        records: policy.allowed,
+        vectorFile,
+        topK: Math.max(policy.allowed.length, topK * 8),
+        dimensions: vectorDimensions
+      })
+    : null;
+  const vectorScores = new Map((vectorSearch?.results ?? []).map((item) => [item.record.id, item.vectorScore]));
+
   const scored = policy.allowed
     .map((record) => {
       const scoredRecord = scoreText(request, record);
-      return { record, ...scoredRecord };
+      const vectorScore = vectorScores.get(record.id) ?? 0;
+      return {
+        record,
+        ...scoredRecord,
+        vectorScore,
+        score: scoredRecord.score + Math.max(0, vectorScore) * 8
+      };
     })
     .filter((item) => item.score > 0)
     .sort((a, b) => b.score - a.score || a.record.name.localeCompare(b.record.name));
@@ -31,9 +65,14 @@ export async function selectCapabilities({ request, records, constraints = {}, t
     kind: item.record.kind,
     name: item.record.name,
     confidence: confidenceFromScore(item.score, bestScore),
-    reason: item.matches.length
-      ? `Matched ${item.matches.slice(0, 5).join(", ")}.`
-      : "Matched inferred task capabilities.",
+    reason:
+      item.vectorScore > 0.05
+        ? `Vector similarity ${item.vectorScore.toFixed(2)}${
+            item.matches.length ? `; matched ${item.matches.slice(0, 5).join(", ")}` : ""
+          }.`
+        : item.matches.length
+          ? `Matched ${item.matches.slice(0, 5).join(", ")}.`
+          : "Matched inferred task capabilities.",
     source: item.record.source ?? null,
     capabilities: item.record.capabilities ?? []
   }));
@@ -45,7 +84,13 @@ export async function selectCapabilities({ request, records, constraints = {}, t
     contextSavings: {
       totalCapabilitiesIndexed: records.length,
       capabilitiesConsideredAfterPolicy: policy.allowed.length,
-      capabilitiesReturned: recommended.length
+      capabilitiesReturned: recommended.length,
+      vectorCandidatesConsidered: vectorSearch?.results.length ?? 0
+    },
+    retrieval: {
+      mode: vectorFile ? "hybrid-vector" : "lexical",
+      vectorProvider: vectorSearch?.provider ?? null,
+      vectorDimensions: vectorSearch?.dimensions ?? null
     },
     cache: { hit: false }
   };

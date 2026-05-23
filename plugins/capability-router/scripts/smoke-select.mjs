@@ -17,7 +17,8 @@ const result = await selectCapabilities({
     process.argv.slice(2).join(" ") ||
     "Fix a failing React checkout button test by inspecting local files and running the focused test",
   records: registry.records,
-  topK: 3
+  topK: 3,
+  vectorFile: path.join(pluginRoot, "data", "vectors.json")
 });
 
 console.log(JSON.stringify(result, null, 2));

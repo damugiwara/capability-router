@@ -21,6 +21,8 @@ const tools = [
         request: { type: "string" },
         topK: { type: "number", default: 5 },
         constraints: { type: "object" },
+        useVectors: { type: "boolean", default: true },
+        vectorDimensions: { type: "number", default: 256 },
         refresh: { type: "boolean", default: false }
       },
       required: ["request"]
@@ -69,7 +71,9 @@ async function callTool(name, args = {}) {
       records: active.records,
       constraints: args.constraints ?? {},
       topK: args.topK ?? 5,
-      cacheFile: path.join(cacheDir, "request-cache.json")
+      cacheFile: path.join(cacheDir, "request-cache.json"),
+      vectorFile: args.useVectors === false ? null : path.join(cacheDir, "vectors.json"),
+      vectorDimensions: args.vectorDimensions ?? 256
     });
   }
 
@@ -82,7 +86,8 @@ async function callTool(name, args = {}) {
     const result = await selectCapabilities({
       request: args.request,
       records: active.records,
-      topK: 5
+      topK: 5,
+      vectorFile: path.join(cacheDir, "vectors.json")
     });
     return {
       explanation: result.recommended.length
