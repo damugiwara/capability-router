@@ -1,5 +1,6 @@
 import { CacheStore, stableHash } from "./cache.mjs";
 import { applyPolicy } from "./policy.mjs";
+import { getSemanticCache, setSemanticCache } from "./semantic-cache.mjs";
 import { scoreText } from "./text.mjs";
 import { capabilityHash, searchVectorStore } from "./vector-store.mjs";
 
@@ -16,20 +17,47 @@ export async function selectCapabilities({
   topK = 5,
   cacheFile = null,
   vectorFile = null,
-  vectorDimensions = 256
+  vectorDimensions = 256,
+  semanticCacheFile = null,
+  semanticCacheThreshold = 0.82
 }) {
   const cache = cacheFile ? new CacheStore(cacheFile) : null;
+  const capabilitySetHash = stableHash(records.map((record) => [record.id, capabilityHash(record)]).sort());
+  const constraintsHash = stableHash(constraints);
   const key = stableHash({
     request,
-    records: records.map((record) => [record.id, capabilityHash(record)]).sort(),
-    constraints,
+    capabilitySetHash,
+    constraintsHash,
     topK,
     vectorFile: Boolean(vectorFile),
-    vectorDimensions
+    vectorDimensions,
+    semanticCacheFile: Boolean(semanticCacheFile)
   });
   if (cache) {
     const cached = await cache.getRequest(key);
     if (cached) return { ...cached, cache: { hit: true } };
+  }
+
+  if (semanticCacheFile) {
+    const semanticHit = await getSemanticCache({
+      cacheFile: semanticCacheFile,
+      request,
+      capabilitySetHash,
+      constraintsHash,
+      threshold: semanticCacheThreshold,
+      dimensions: vectorDimensions
+    });
+    if (semanticHit.hit) {
+      return {
+        ...semanticHit.result,
+        cache: { hit: false },
+        semanticCache: {
+          hit: true,
+          similarity: Number(semanticHit.similarity.toFixed(4)),
+          matchedRequest: semanticHit.matchedRequest
+        }
+      };
+    }
   }
 
   const policy = applyPolicy(records, constraints);
@@ -92,8 +120,22 @@ export async function selectCapabilities({
       vectorProvider: vectorSearch?.provider ?? null,
       vectorDimensions: vectorSearch?.dimensions ?? null
     },
+    semanticCache: {
+      hit: false
+    },
     cache: { hit: false }
   };
+
+  if (semanticCacheFile) {
+    await setSemanticCache({
+      cacheFile: semanticCacheFile,
+      request,
+      capabilitySetHash,
+      constraintsHash,
+      result,
+      dimensions: vectorDimensions
+    });
+  }
 
   if (cache) await cache.setRequest(key, result);
   return result;

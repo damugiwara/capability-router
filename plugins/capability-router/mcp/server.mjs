@@ -23,6 +23,8 @@ const tools = [
         constraints: { type: "object" },
         useVectors: { type: "boolean", default: true },
         vectorDimensions: { type: "number", default: 256 },
+        useSemanticCache: { type: "boolean", default: true },
+        semanticCacheThreshold: { type: "number", default: 0.82 },
         refresh: { type: "boolean", default: false }
       },
       required: ["request"]
@@ -73,7 +75,9 @@ async function callTool(name, args = {}) {
       topK: args.topK ?? 5,
       cacheFile: path.join(cacheDir, "request-cache.json"),
       vectorFile: args.useVectors === false ? null : path.join(cacheDir, "vectors.json"),
-      vectorDimensions: args.vectorDimensions ?? 256
+      vectorDimensions: args.vectorDimensions ?? 256,
+      semanticCacheFile: args.useSemanticCache === false ? null : path.join(cacheDir, "semantic-cache.json"),
+      semanticCacheThreshold: args.semanticCacheThreshold ?? 0.82
     });
   }
 
@@ -87,7 +91,8 @@ async function callTool(name, args = {}) {
       request: args.request,
       records: active.records,
       topK: 5,
-      vectorFile: path.join(cacheDir, "vectors.json")
+      vectorFile: path.join(cacheDir, "vectors.json"),
+      semanticCacheFile: path.join(cacheDir, "semantic-cache.json")
     });
     return {
       explanation: result.recommended.length

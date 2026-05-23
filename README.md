@@ -85,15 +85,16 @@ If a command does not appear immediately in Codex, restart the Codex app or relo
 4. The scanner normalizes each item into a compact capability record.
 5. The local embedding layer turns capability records and the user request into deterministic hashed vectors.
 6. The vector store persists capability vectors in `data/vectors.json` and retrieves nearest matches with cosine similarity.
-7. The selector combines vector similarity with lexical scoring, inferred intent tags, and task-specific boosts.
-8. The policy layer applies soft masking constraints such as disallowed network access.
-9. The MCP server returns only the top relevant candidates, confidence scores, reasons, and context-savings metadata.
+7. The semantic result cache stores prior selections in `data/semantic-cache.json` and reuses them for similar requests when the capability set and constraints are unchanged.
+8. The selector combines vector similarity with lexical scoring, inferred intent tags, and task-specific boosts.
+9. The policy layer applies soft masking constraints such as disallowed network access.
+10. The MCP server returns only the top relevant candidates, confidence scores, reasons, and context-savings metadata.
 
 ## Why It Reduces Token Usage
 
 The traditional approach is to make many tool, skill, and plugin descriptions available in the model context so the model can choose directly. That is simple, but expensive: every capability description consumes prompt/context space.
 
-Capability Router keeps the full catalog outside the main prompt in a local registry and local vector store. At task time it retrieves only the most relevant few records.
+Capability Router keeps the full catalog outside the main prompt in a local registry, local vector store, and semantic result cache. At task time it retrieves only the most relevant few records or reuses a previous result for a semantically similar request.
 
 Measured in this workspace with 203 indexed capabilities:
 
@@ -107,7 +108,7 @@ These are deterministic payload estimates from `scripts/benchmark-context.mjs`, 
 ## Current Limitations
 
 - Soft masking only: the router can recommend or exclude capabilities, but cannot physically remove Codex-native tools from the model unless Codex exposes a hard tool-masking hook.
-- Practical caching only: the router caches metadata, file hashes, local vectors, request rankings, and registry output. It cannot access transformer-level KV cache inside Codex.
+- Practical caching only: the router caches metadata, file hashes, local vectors, semantic selection results, request rankings, and registry output. It cannot access transformer-level KV cache inside Codex.
 - Local embeddings are dependency-free hashed vectors, not transformer embeddings. Future versions can add optional hosted or local model embeddings for stronger semantic RAG.
 
 ## Development

@@ -8,6 +8,7 @@ import { CacheStore } from "../src/cache.mjs";
 import { embedText, cosineSimilarity } from "../src/embeddings.mjs";
 import { refreshRegistry } from "../src/indexer.mjs";
 import { applyPolicy } from "../src/policy.mjs";
+import { getSemanticCache, setSemanticCache } from "../src/semantic-cache.mjs";
 import { selectCapabilities } from "../src/selector.mjs";
 import { refreshVectorStore, searchVectorStore } from "../src/vector-store.mjs";
 
@@ -201,6 +202,106 @@ test("selectCapabilities can use local vector retrieval and reports vector mode"
   assert.equal(result.recommended[0].name, "functions.apply_patch");
   assert.equal(result.retrieval.mode, "hybrid-vector");
   assert.equal(result.contextSavings.vectorCandidatesConsidered, 2);
+});
+
+test("semantic cache reuses selection for similar prompts when capability set is unchanged", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "capability-semantic-cache-"));
+  const cacheFile = path.join(root, "semantic-cache.json");
+  const capabilitySetHash = "same-capabilities";
+  const constraintsHash = "same-constraints";
+  const result = {
+    recommended: [{ name: "functions.apply_patch" }],
+    retrieval: { mode: "hybrid-vector" }
+  };
+
+  await setSemanticCache({
+    cacheFile,
+    request: "fix a failing react checkout button test",
+    capabilitySetHash,
+    constraintsHash,
+    result,
+    dimensions: 64
+  });
+
+  const hit = await getSemanticCache({
+    cacheFile,
+    request: "repair the broken react checkout button spec",
+    capabilitySetHash,
+    constraintsHash,
+    threshold: 0.35,
+    dimensions: 64
+  });
+
+  assert.equal(hit.hit, true);
+  assert.equal(hit.result.recommended[0].name, "functions.apply_patch");
+});
+
+test("semantic cache misses when capability set changes", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "capability-semantic-cache-miss-"));
+  const cacheFile = path.join(root, "semantic-cache.json");
+
+  await setSemanticCache({
+    cacheFile,
+    request: "fix a failing react checkout button test",
+    capabilitySetHash: "old-capabilities",
+    constraintsHash: "same-constraints",
+    result: { recommended: [{ name: "functions.apply_patch" }] },
+    dimensions: 64
+  });
+
+  const miss = await getSemanticCache({
+    cacheFile,
+    request: "fix a failing react checkout button test",
+    capabilitySetHash: "new-capabilities",
+    constraintsHash: "same-constraints",
+    threshold: 0.35,
+    dimensions: 64
+  });
+
+  assert.equal(miss.hit, false);
+});
+
+test("selectCapabilities reports semantic cache hits for similar requests", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "capability-select-semantic-cache-"));
+  const semanticCacheFile = path.join(root, "semantic-cache.json");
+  const vectorFile = path.join(root, "vectors.json");
+  const records = [
+    {
+      id: "tool:functions.apply_patch",
+      kind: "tool",
+      name: "functions.apply_patch",
+      description: "Edit local files using patch hunks for precise code changes.",
+      capabilities: ["filesystem", "editing"]
+    },
+    {
+      id: "tool:image_gen.imagegen",
+      kind: "tool",
+      name: "image_gen.imagegen",
+      description: "Generate or edit raster images from prompts.",
+      capabilities: ["image", "generation"]
+    }
+  ];
+
+  const first = await selectCapabilities({
+    request: "fix a failing react checkout button test",
+    records,
+    topK: 1,
+    vectorFile,
+    semanticCacheFile,
+    semanticCacheThreshold: 0.35
+  });
+  const second = await selectCapabilities({
+    request: "repair the broken react checkout button spec",
+    records,
+    topK: 1,
+    vectorFile,
+    semanticCacheFile,
+    semanticCacheThreshold: 0.35
+  });
+
+  assert.equal(first.semanticCache.hit, false);
+  assert.equal(second.semanticCache.hit, true);
+  assert.equal(second.recommended[0].name, first.recommended[0].name);
 });
 
 test("CacheStore avoids rewriting unchanged registry records by file hash", async () => {

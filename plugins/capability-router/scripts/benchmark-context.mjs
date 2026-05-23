@@ -59,7 +59,8 @@ const routed = await selectCapabilities({
   records: registry.records,
   topK: Number(process.env.CAPABILITY_ROUTER_BENCH_TOP_K ?? 5),
   cacheFile: path.join(pluginRoot, "data", "request-cache.json"),
-  vectorFile: path.join(pluginRoot, "data", "vectors.json")
+  vectorFile: path.join(pluginRoot, "data", "vectors.json"),
+  semanticCacheFile: path.join(pluginRoot, "data", "semantic-cache.json")
 });
 
 const pluginPayload = JSON.stringify({
@@ -92,6 +93,7 @@ console.log(
         estimatedTokens: pluginTokens,
         capabilitiesReturned: routed.recommended.length,
         cacheHit: routed.cache.hit,
+        semanticCache: routed.semanticCache,
         retrieval: routed.retrieval,
         topRecommendation: routed.recommended[0] ?? null,
         description: "Only router recommendation payload serialized into context."

@@ -9,7 +9,7 @@ Capability Router is a Codex plugin that indexes available tools, skills, and pl
 - `capability_router.list_capabilities`: inspect indexed capabilities
 - `capability_router.explain`: explain a routing recommendation
 
-The router uses metadata retrieval, local hashed embeddings, vector search, policy filtering, and local caches to reduce how much capability context needs to be loaded for a task.
+The router uses metadata retrieval, local hashed embeddings, vector search, semantic result caching, policy filtering, and local caches to reduce how much capability context needs to be loaded for a task.
 
 ## Install
 
@@ -69,6 +69,14 @@ The plugin uses dependency-free local embeddings:
 - `src/selector.mjs` combines vector similarity with lexical scoring and intent boosts.
 
 No hosted embedding API key or external vector database is required.
+
+## Semantic Result Cache
+
+The plugin stores prior routing results in `data/semantic-cache.json`.
+
+When a later request has a similar local request vector and the capability set plus constraints have not changed, the selector can reuse the cached recommendation instead of re-running full ranking.
+
+This is a KV-cache-like router optimization. It is not transformer KV cache.
 
 ## Test
 

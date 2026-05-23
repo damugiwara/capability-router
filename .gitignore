@@ -1,5 +1,6 @@
 plugins/capability-router/data/registry.json
 plugins/capability-router/data/request-cache.json
+plugins/capability-router/data/semantic-cache.json
 plugins/capability-router/data/vectors.json
 plugins/capability-router/data/*.tmp
 dist/

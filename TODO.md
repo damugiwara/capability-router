@@ -17,8 +17,9 @@ This file tracks future work for reducing or removing current Codex-native limit
 - [ ] If not exposed, keep improving practical substitutes:
   - [ ] registry cache
   - [x] local vector cache
+  - [x] semantic result cache
   - [ ] hosted/model embedding cache
-  - [ ] retrieval result cache
+  - [x] retrieval result cache
   - [ ] ranking cache
   - [ ] explanation cache
 
