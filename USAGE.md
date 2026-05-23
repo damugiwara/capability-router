@@ -67,6 +67,16 @@ Use capability-router to choose the best tool for this task: edit the local Reac
 Use Capability Router to explain which capability should handle this task: generate an image from this prompt.
 ```
 
+Or use a slash command if Codex has indexed plugin commands:
+
+```text
+/capability research this Wikipedia page and summarize it
+```
+
+```text
+/capability-router edit the local React component to fix a failing button test
+```
+
 ## Refresh The Index
 
 After installing or removing skills/plugins:
@@ -89,4 +99,3 @@ npm test --prefix plugins/capability-router
 node plugins/capability-router/mcp/server.mjs --stdio-smoke
 npm run smoke --prefix plugins/capability-router -- "Research this Wikipedia page"
 ```
-

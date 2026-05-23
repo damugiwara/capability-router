@@ -32,6 +32,21 @@ The router scans available Codex capabilities, builds a compact local registry, 
 
 The plugin root is `plugins/capability-router`. The repo-local marketplace entry is `.agents/plugins/marketplace.json`.
 
+## Slash Commands
+
+The plugin includes two command files:
+
+- `/capability`
+- `/capability-router`
+
+Use either command with a task argument:
+
+```text
+/capability research this Wikipedia page and summarize it
+```
+
+If the command does not appear immediately in Codex, restart the Codex app or reload local plugins so the command index is rebuilt.
+
 ## How It Works
 
 1. Codex loads the plugin metadata and the `capability-router` skill.
@@ -85,4 +100,3 @@ Run the context benchmark:
 ```powershell
 node plugins/capability-router/scripts/benchmark-context.mjs "Research this Wikipedia page and summarize it"
 ```
-
