@@ -48,16 +48,16 @@ function baseTokens(text) {
 function normalizeQueryText(text) {
   return String(text ?? "")
     .replace(/https?:\/\/\S+/gi, " url website webpage page ")
-    .replace(/\b[\w.-]+[\\/][\w./\\-]+\b/g, " path folder file ");
+    .replace(/\b[\w.-]+[\\/][\w./\\-]+\b/g, " local source code repository ");
 }
 
-export function tokenize(text) {
+export function tokenize(text, { semantic = false } = {}) {
   const tokens = baseTokens(text);
   const expanded = new Set();
 
   for (const token of tokens) {
     expanded.add(token);
-    for (const variant of tokenVariants(token)) {
+    for (const variant of tokenVariants(token, { semantic })) {
       if (variant.length > 1 && !STOP_WORDS.has(variant)) expanded.add(variant);
     }
   }
@@ -67,14 +67,38 @@ export function tokenize(text) {
 
 function queryTermWeights(text) {
   const weights = new Map();
-  const tokens = baseTokens(normalizeQueryText(text));
+  const rawTokens = splitIdentifier(normalizeQueryText(text))
+    .toLowerCase()
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter(Boolean);
+  const tokens = [];
+  let modifierFactor = 1;
+  const firstContentToken = rawTokens.find((token) => token.length > 1 && !STOP_WORDS.has(token));
+  const authoringRequest = ["author", "create", "created", "creating", "write", "writing", "wrote"].includes(
+    firstContentToken
+  );
 
-  tokens.forEach((token, index) => {
-    const positionalWeight = 1 + Math.max(0, 0.8 - index * 0.08);
-    weights.set(token, Math.max(weights.get(token) ?? 0, positionalWeight));
-    for (const variant of tokenVariants(token)) {
+  rawTokens.forEach((token, rawIndex) => {
+    if (["with", "using", "via"].includes(token)) {
+      modifierFactor = 1;
+      return;
+    }
+    if (authoringRequest && ["for", "about", "regarding"].includes(token) && rawIndex >= 3) {
+      modifierFactor = 0.35;
+      return;
+    }
+    if (token.length <= 1 || STOP_WORDS.has(token)) return;
+    tokens.push({ token, modifierFactor });
+  });
+
+  tokens.forEach(({ token, modifierFactor: factor }, index) => {
+    const positionalWeight = Math.max(0.7, 2.2 - index * 0.22);
+    const weightedPosition = positionalWeight * factor;
+    weights.set(token, Math.max(weights.get(token) ?? 0, weightedPosition));
+    for (const variant of tokenVariants(token, { semantic: true })) {
       if (variant.length > 1 && !STOP_WORDS.has(variant)) {
-        weights.set(variant, Math.max(weights.get(variant) ?? 0, positionalWeight * 0.8));
+        weights.set(variant, Math.max(weights.get(variant) ?? 0, weightedPosition * 0.8));
       }
     }
   });
@@ -82,8 +106,21 @@ function queryTermWeights(text) {
   return weights;
 }
 
-function tokenVariants(token) {
+function tokenVariants(token, { semantic = false } = {}) {
   const variants = [];
+  if (semantic) {
+    const authoring = Object.assign(Object.create(null), {
+      author: ["create"],
+      authored: ["created", "wrote"],
+      created: ["authored"],
+      creating: ["authoring"],
+      write: ["author", "create"],
+      writer: ["author", "creator"],
+      writing: ["authoring", "creating"],
+      wrote: ["authored", "created"]
+    });
+    if (authoring[token]) variants.push(...authoring[token]);
+  }
   if (token.includes("+")) {
     variants.push(token.replace(/\+/g, "p"), token.replace(/\+/g, "plus"));
   }
@@ -128,7 +165,7 @@ export function buildCapabilityProfile(record) {
     [record.description, 2],
     [record.provider, 0.4],
     [record.source, 0.25],
-    [record.profileText, 0.35]
+    [record.profileText, 0.2]
   ];
   const text = compactText(weightedFields.map(([value]) => value).filter(Boolean).join(" "));
   const termCounts = new Map();
@@ -226,6 +263,25 @@ function phraseOverlap(queryTerms, profile) {
   return score;
 }
 
+function metadataPhraseOverlap(query, profile) {
+  const queryTokens = baseTokens(normalizeQueryText(query));
+  if (queryTokens.length < 2 || !profile.text) return 0;
+
+  const profileText = baseTokens(profile.text).join(" ");
+  const phrases = new Set();
+  for (let size = 2; size <= 3; size += 1) {
+    for (let index = 0; index <= queryTokens.length - size; index += 1) {
+      phrases.add(queryTokens.slice(index, index + size).join(" "));
+    }
+  }
+
+  let score = 0;
+  for (const phrase of phrases) {
+    if (profileText.includes(phrase)) score += phrase.split(" ").length * 1.25;
+  }
+  return score;
+}
+
 function nameCoverage(queryTerms, profile) {
   const nameTerms = baseTokens(profile.name);
   if (!nameTerms.length) return 0;
@@ -235,7 +291,7 @@ function nameCoverage(queryTerms, profile) {
     return tokenVariants(term).some((variant) => querySet.has(variant));
   }).length;
   const coverage = matched / nameTerms.length;
-  return matched ? coverage * coverage * 14 : 0;
+  return matched ? coverage * coverage * 22 : 0;
 }
 
 export function scoreText(query, record, stats = null) {
@@ -245,7 +301,11 @@ export function scoreText(query, record, stats = null) {
   const queryTerms = [...queryWeights.keys()];
   const querySet = new Set(queryTerms);
   const matches = [...new Set(profile.terms.filter((term) => querySet.has(term)))];
-  const score = bm25(queryWeights, profile, corpusStats) + phraseOverlap(queryTerms, profile) + nameCoverage(queryTerms, profile);
+  const score =
+    bm25(queryWeights, profile, corpusStats) +
+    phraseOverlap(queryTerms, profile) +
+    metadataPhraseOverlap(query, profile) +
+    nameCoverage(queryTerms, profile);
 
   return {
     score,

@@ -21,15 +21,15 @@
     "name": "functions.shell_command",
     "description": "Run PowerShell commands for local filesystem inspection, listing files, finding files, command-line tools, focused test suites, failures, builds, npm, pytest, git, and terminal execution.",
     "capabilities": ["filesystem", "shell", "execution", "test", "build", "local"],
-    "profileText": "Use for run command, list directory, find TypeScript files, inspect repo, focused test suite, inspect failures, run tests, run build, npm install, pytest, git command, terminal output, command line, source code audit, bug search, maintainability inspection."
+    "profileText": "Use for run command, list directory, find TypeScript files, inspect repo, focused test suite, inspect failures, failing test, run tests, run build, npm install, pytest, git command, terminal output, command line, source code audit, bug search, maintainability inspection."
   },
   {
     "id": "tool:functions.apply_patch",
     "kind": "tool",
     "name": "functions.apply_patch",
-    "description": "Edit, create, update, refactor, repair, or modify local files using precise patch hunks for code, README, config, docs, tests, audit fixes, maintainability improvements, and source changes.",
+    "description": "Edit, create, update, refactor, repair, or modify local files using precise patch hunks for code, README, config, docs, tests, audit fixes, maintainability improvements, React components, UI buttons, and source changes.",
     "capabilities": ["filesystem", "editing", "local", "code"],
-    "profileText": "Use for edit file, create file, update README, create config, refactor module, fix code, repair test, modify source, write documentation in repository, address audit findings, fix bugs, add missing tests."
+    "profileText": "Use for edit file, create file, create README section, update README, write install steps, edit repository documentation, create config, refactor module, fix code, edit local React component, repair failing button test, repair test, modify source, write documentation in repository, address audit findings, fix bugs, add missing tests."
   },
   {
     "id": "tool:image_gen.imagegen",

@@ -443,6 +443,74 @@ test("selectCapabilities prefers source-code audit tools over broad optimizer sk
   assert.ok(["functions.shell_command", "functions.apply_patch"].includes(result.recommended[0].name));
 });
 
+test("selectCapabilities prefers direct file editing tools for local repository documentation changes", async () => {
+  const records = [
+    {
+      id: "tool:functions.apply_patch",
+      kind: "tool",
+      name: "functions.apply_patch",
+      description: "Edit, create, update, or modify local repository files, README docs, installation instructions, and markdown content.",
+      capabilities: ["filesystem", "editing", "local", "code"],
+      profileText: "Use for create README section, edit repository documentation, write install steps, update local files."
+    },
+    {
+      id: "skill:figma-generate-design",
+      kind: "skill",
+      name: "figma-generate-design",
+      description: "Generate design sections and visual layouts from product requirements.",
+      capabilities: ["design", "visual"],
+      profileText: "Use for create section, design layout, generate mockup, visual composition."
+    },
+    {
+      id: "skill:testing-handbook-generator",
+      kind: "skill",
+      name: "testing-handbook-generator",
+      description: "Generate repository testing handbook sections from testing guidance.",
+      capabilities: ["documentation", "testing"],
+      profileText: "Use for create repository testing documentation and handbook sections."
+    }
+  ];
+
+  const result = await selectCapabilities({
+    request: "Create a README section in this repository explaining the install steps",
+    records,
+    topK: 3,
+    vectorFile: null
+  });
+
+  assert.equal(result.recommended[0].name, "functions.apply_patch");
+});
+
+test("selectCapabilities treats authoring verbs as metadata matches for creator capabilities", async () => {
+  const records = [
+    {
+      id: "skill:skill-creator",
+      kind: "skill",
+      name: "skill-creator",
+      description: "Guide for creating effective Codex skills. Use when users want to create a new skill or update an existing skill.",
+      capabilities: ["editing"],
+      profileText: "Skill Creation Process. Initialize the skill. Edit the skill. Validate the skill."
+    },
+    {
+      id: "skill:c-review",
+      kind: "skill",
+      name: "c-review",
+      description: "Performs comprehensive C and C++ security review for modules and codebases.",
+      capabilities: ["security", "review"],
+      profileText: "Use when reviewing C modules for security issues."
+    }
+  ];
+
+  const result = await selectCapabilities({
+    request: "Write a new Codex skill for reviewing Terraform modules",
+    records,
+    topK: 2,
+    vectorFile: null
+  });
+
+  assert.equal(result.recommended[0].name, "skill-creator");
+});
+
 test("CacheStore avoids rewriting unchanged registry records by file hash", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "capability-cache-"));
   const cache = new CacheStore(path.join(root, "cache.json"));
