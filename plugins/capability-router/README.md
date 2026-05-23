@@ -2,7 +2,7 @@
 
 Capability Router is a Codex plugin that indexes available tools, skills, and plugins, then exposes MCP tools for compact task routing.
 
-## What it provides
+## What It Provides
 
 - `capability_router.select`: rank relevant capabilities for a task
 - `capability_router.refresh_index`: rebuild the local capability registry
@@ -13,7 +13,52 @@ The router uses metadata retrieval, policy filtering, and local caches to reduce
 
 ## Install
 
-Use the plugin folder at `plugins/capability-router` as the distributable plugin root. The repo-local marketplace entry is at `.agents/plugins/marketplace.json`.
+Use this folder as the distributable plugin root:
+
+```text
+plugins/capability-router
+```
+
+The repo-local marketplace entry is:
+
+```text
+.agents/plugins/marketplace.json
+```
+
+To install in another Codex:
+
+1. Clone the repository.
+2. Add or open `.agents/plugins/marketplace.json` in Codex.
+3. Install or enable `capability-router`.
+4. Restart Codex or reload plugins.
+5. Type `/capability` or `/capability-router` in the composer.
+
+For a personal local install, copy this folder to:
+
+```text
+$HOME\plugins\capability-router
+```
+
+Then add a marketplace entry in:
+
+```text
+$HOME\.agents\plugins\marketplace.json
+```
+
+pointing to:
+
+```text
+./plugins/capability-router
+```
+
+## Slash Commands
+
+The plugin includes:
+
+- `/capability`
+- `/capability-router`
+
+The command definitions live in `commands/` and include explicit `name:` frontmatter so Codex can index them.
 
 ## Test
 

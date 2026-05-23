@@ -1,33 +1,95 @@
 # Capability Router
 
-Capability Router is a Codex plugin that helps route a task to the most relevant tool, skill, or plugin without loading every capability description into the active context.
+Capability Router is a Codex plugin that routes a task to the most relevant tool, skill, or plugin without loading every capability description into the active context.
 
-It is designed for explicit use:
+It is designed for explicit use through natural language or slash commands:
 
 ```text
 Use Capability Router for this task: research this Wikipedia page and summarize it.
 ```
 
+```text
+/capability research this Wikipedia page and summarize it
+```
+
 The router scans available Codex capabilities, builds a compact local registry, ranks the task against that registry, applies soft masking rules, and returns only the top candidates.
+
+## Install In Codex
+
+### Option 1: Install From The Repo Marketplace
+
+1. Clone this repository.
+
+   ```powershell
+   git clone https://github.com/damugiwara/capability-router.git
+   cd capability-router
+   ```
+
+2. In Codex, add or open the repo marketplace file:
+
+   ```text
+   .agents/plugins/marketplace.json
+   ```
+
+3. Install or enable `capability-router` from that marketplace.
+
+4. Restart Codex or reload plugins so skills, MCP tools, and slash commands are indexed.
+
+5. Type `/capability` in the composer. You should see the slash command.
+
+### Option 2: Install As A Personal Local Plugin
+
+Copy the plugin to your personal plugin folder:
+
+```powershell
+New-Item -ItemType Directory -Force -Path "$HOME\plugins" | Out-Null
+Copy-Item -Recurse -Force ".\plugins\capability-router" "$HOME\plugins\capability-router"
+```
+
+Add this plugin entry to:
+
+```text
+$HOME\.agents\plugins\marketplace.json
+```
+
+```json
+{
+  "name": "capability-router",
+  "source": {
+    "source": "local",
+    "path": "./plugins/capability-router"
+  },
+  "policy": {
+    "installation": "AVAILABLE",
+    "authentication": "ON_INSTALL"
+  },
+  "category": "Productivity"
+}
+```
+
+Restart Codex or reload plugins after updating the marketplace.
 
 ## Repository Layout
 
 ```text
 .
-├── .agents/plugins/marketplace.json
-├── plugins/capability-router/
-│   ├── .codex-plugin/plugin.json
-│   ├── .mcp.json
-│   ├── data/builtin-capabilities.json
-│   ├── mcp/server.mjs
-│   ├── scripts/
-│   │   ├── benchmark-context.mjs
-│   │   └── smoke-select.mjs
-│   ├── skills/capability-router/SKILL.md
-│   ├── src/
-│   └── test/
-├── USAGE.md
-└── TODO.md
+|-- .agents/plugins/marketplace.json
+|-- plugins/capability-router/
+|   |-- .codex-plugin/plugin.json
+|   |-- .mcp.json
+|   |-- commands/
+|   |   |-- capability.md
+|   |   `-- capability-router.md
+|   |-- data/builtin-capabilities.json
+|   |-- mcp/server.mjs
+|   |-- scripts/
+|   |   |-- benchmark-context.mjs
+|   |   `-- smoke-select.mjs
+|   |-- skills/capability-router/SKILL.md
+|   |-- src/
+|   `-- test/
+|-- USAGE.md
+`-- TODO.md
 ```
 
 The plugin root is `plugins/capability-router`. The repo-local marketplace entry is `.agents/plugins/marketplace.json`.
@@ -45,12 +107,14 @@ Use either command with a task argument:
 /capability research this Wikipedia page and summarize it
 ```
 
-If the command does not appear immediately in Codex, restart the Codex app or reload local plugins so the command index is rebuilt.
+The command definitions live in `plugins/capability-router/commands/` and include explicit `name:` frontmatter so Codex can index them as slash commands.
+
+If a command does not appear immediately in Codex, restart the Codex app or reload local plugins so the command index is rebuilt.
 
 ## How It Works
 
-1. Codex loads the plugin metadata and the `capability-router` skill.
-2. When you explicitly ask for routing, Codex calls the MCP tool `capability_router.select`.
+1. Codex loads the plugin metadata, slash commands, MCP server config, and the `capability-router` skill.
+2. When you invoke `/capability`, `/capability-router`, or explicitly ask for routing, Codex calls the MCP tool `capability_router.select`.
 3. The MCP server scans installed capability metadata:
    - skill frontmatter from `SKILL.md`
    - plugin manifests from `.codex-plugin/plugin.json`
