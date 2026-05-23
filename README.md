@@ -5,11 +5,11 @@ Capability Router is a Codex plugin that routes a task to the most relevant tool
 It is designed for explicit use through natural language or slash commands:
 
 ```text
-Use Capability Router for this task: research this Wikipedia page and summarize it.
+Use Capability Router for this task: fix a failing React checkout button test by inspecting local files and running the focused test.
 ```
 
 ```text
-/capability research this Wikipedia page and summarize it
+/capability fix a failing React checkout button test by inspecting local files and running the focused test
 ```
 
 The router scans available Codex capabilities, builds a compact local registry, ranks the task against that registry, applies soft masking rules, and returns only the top candidates.
@@ -104,7 +104,7 @@ The plugin includes two command files:
 Use either command with a task argument:
 
 ```text
-/capability research this Wikipedia page and summarize it
+/capability fix a failing React checkout button test by inspecting local files and running the focused test
 ```
 
 The command definitions live in `plugins/capability-router/commands/` and include explicit `name:` frontmatter so Codex can index them as slash commands.
@@ -134,8 +134,8 @@ Measured in this workspace with 203 indexed capabilities:
 
 | Task | Traditional Context | Router Context | Reduction |
 |---|---:|---:|---:|
-| Wikipedia research task | ~19,403 estimated tokens | ~364 estimated tokens | ~98.12% |
-| React/debug task | ~19,399 estimated tokens | ~395 estimated tokens | ~97.96% |
+| React checkout button test fix | ~19,408 estimated tokens | ~390 estimated tokens | ~97.99% |
+| Local code-edit task | ~19,399 estimated tokens | ~395 estimated tokens | ~97.96% |
 
 These are deterministic payload estimates from `scripts/benchmark-context.mjs`, not hidden Codex internal prompt accounting. They measure the serialized capability context that would be needed by each approach.
 
@@ -156,11 +156,11 @@ npm test --prefix plugins/capability-router
 Run a smoke selection:
 
 ```powershell
-npm run smoke --prefix plugins/capability-router -- "Research this Wikipedia page"
+npm run smoke --prefix plugins/capability-router -- "Fix a failing React checkout button test"
 ```
 
 Run the context benchmark:
 
 ```powershell
-node plugins/capability-router/scripts/benchmark-context.mjs "Research this Wikipedia page and summarize it"
+node plugins/capability-router/scripts/benchmark-context.mjs "Fix a failing React checkout button test by inspecting local files and running the focused test"
 ```

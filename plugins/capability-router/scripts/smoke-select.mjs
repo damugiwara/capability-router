@@ -13,7 +13,9 @@ const registry = await refreshRegistry({
   includeBuiltins: true
 });
 const result = await selectCapabilities({
-  request: process.argv.slice(2).join(" ") || "Research this Wikipedia page and summarize it",
+  request:
+    process.argv.slice(2).join(" ") ||
+    "Fix a failing React checkout button test by inspecting local files and running the focused test",
   records: registry.records,
   topK: 3
 });

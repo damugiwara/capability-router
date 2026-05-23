@@ -8,7 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pluginRoot = path.resolve(__dirname, "..");
 const request =
   process.argv.slice(2).join(" ") ||
-  "Research this Wikipedia page and summarize the important facts with citations.";
+  "Fix a failing React checkout button test by inspecting local files and running the focused test.";
 
 function defaultRoots() {
   const roots = [process.cwd(), pluginRoot];

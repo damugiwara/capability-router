@@ -64,8 +64,8 @@ The command definitions live in `commands/` and include explicit `name:` frontma
 
 ```powershell
 npm test --prefix plugins/capability-router
-npm run smoke --prefix plugins/capability-router -- "Research this Wikipedia page"
-node plugins/capability-router/scripts/benchmark-context.mjs "Research this Wikipedia page"
+npm run smoke --prefix plugins/capability-router -- "Fix a failing React checkout button test"
+node plugins/capability-router/scripts/benchmark-context.mjs "Fix a failing React checkout button test by inspecting local files and running the focused test"
 ```
 
 ## Limitations

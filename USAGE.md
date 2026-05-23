@@ -73,7 +73,7 @@ The plugin includes:
 Use the slash command:
 
 ```text
-/capability research this Wikipedia page and summarize it
+/capability fix a failing React checkout button test by inspecting local files and running the focused test
 ```
 
 ```text
@@ -83,7 +83,7 @@ Use the slash command:
 Or mention Capability Router explicitly:
 
 ```text
-Use Capability Router for this task: research this Wikipedia page and summarize it.
+Use Capability Router for this task: fix a failing React checkout button test by inspecting local files and running the focused test.
 ```
 
 ```text
@@ -114,5 +114,5 @@ Use Capability Router to refresh its capability index.
 ```powershell
 npm test --prefix plugins/capability-router
 node plugins/capability-router/mcp/server.mjs --stdio-smoke
-npm run smoke --prefix plugins/capability-router -- "Research this Wikipedia page"
+npm run smoke --prefix plugins/capability-router -- "Fix a failing React checkout button test"
 ```
