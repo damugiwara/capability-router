@@ -1,4 +1,5 @@
 ---
+name: capability-router
 description: Route a task to the best Codex capability with Capability Router
 argument-hint: "[task to route]"
 ---
