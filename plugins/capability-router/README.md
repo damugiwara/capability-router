@@ -80,7 +80,9 @@ The plugin uses dependency-free local embeddings:
 
 - `src/embeddings.mjs` converts task/capability text into deterministic hashed vectors.
 - `src/vector-store.mjs` persists vectors in `data/vectors.json`.
-- `src/selector.mjs` combines vector similarity with lexical scoring and intent boosts.
+- `src/selector.mjs` combines vector similarity with BM25-style lexical scoring, exact name/phrase overlap, and generic positional query weighting.
+
+Production ranking is metadata-driven. Runtime scoring does not contain domain-specific branches such as per-tool name boosts or task-specific intent functions; quality should be improved by better indexed metadata, weighting, or descriptions.
 
 No hosted embedding API key or external vector database is required.
 
@@ -102,7 +104,7 @@ npm run smoke --prefix plugins/capability-router -- "Fix a failing React checkou
 node plugins/capability-router/scripts/benchmark-context.mjs "Fix a failing React checkout button test by inspecting local files and running the focused test"
 ```
 
-The routing eval suite is intentionally cross-category so broad skills cannot silently win only because their descriptions contain generic words.
+The 50-case routing eval suite is intentionally cross-category so broad skills cannot silently win only because their descriptions contain generic words.
 
 ## Limitations
 

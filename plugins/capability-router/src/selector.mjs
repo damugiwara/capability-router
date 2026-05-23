@@ -1,10 +1,10 @@
 import { CacheStore, stableHash } from "./cache.mjs";
 import { applyPolicy } from "./policy.mjs";
 import { getSemanticCache, setSemanticCache } from "./semantic-cache.mjs";
-import { scoreText } from "./text.mjs";
+import { buildCorpusStats, scoreText } from "./text.mjs";
 import { capabilityHash, searchVectorStore } from "./vector-store.mjs";
 
-export const ROUTING_VERSION = "3";
+export const ROUTING_VERSION = "4";
 
 function confidenceFromScore(score, bestScore) {
   if (score <= 0) return 0;
@@ -65,6 +65,7 @@ export async function selectCapabilities({
   }
 
   const policy = applyPolicy(records, constraints);
+  const corpusStats = buildCorpusStats(policy.allowed);
 
   const vectorSearch = vectorFile
     ? await searchVectorStore({
@@ -79,13 +80,13 @@ export async function selectCapabilities({
 
   const scored = policy.allowed
     .map((record) => {
-      const scoredRecord = scoreText(request, record);
+      const scoredRecord = scoreText(request, record, corpusStats);
       const vectorScore = vectorScores.get(record.id) ?? 0;
       return {
         record,
         ...scoredRecord,
         vectorScore,
-        score: scoredRecord.score + Math.max(0, vectorScore) * 8
+        score: scoredRecord.score + Math.max(0, vectorScore) * 0.5
       };
     })
     .filter((item) => item.score > 0)

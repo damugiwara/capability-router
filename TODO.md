@@ -41,15 +41,17 @@ This file tracks future work for reducing or removing current Codex-native limit
 
 ## Evaluation
 
-- [ ] Create a benchmark suite for common task categories:
-  - [ ] web research
-  - [ ] local code edits
-  - [ ] debugging
-  - [ ] image generation
-  - [ ] spreadsheet/document tasks
-  - [ ] database/Supabase tasks
-- [ ] Track top-1 accuracy, top-3 accuracy, estimated token savings, and cache hit rate.
-- [ ] Add regression tests for known misroutes.
+- [x] Create a 50-case benchmark suite for common task categories:
+  - [x] web research
+  - [x] local code edits
+  - [x] debugging/test execution
+  - [x] image generation
+  - [x] spreadsheet/document/presentation tasks
+  - [x] database/Supabase tasks
+  - [x] specialized security and testing workflows
+- [x] Track top-1 accuracy, top-3 accuracy, and blocked top-1 failures in routing evals.
+- [ ] Track estimated token savings and cache hit rate in eval output.
+- [x] Add regression tests for known misroutes and production hardcoding.
 
 ## Distribution
 

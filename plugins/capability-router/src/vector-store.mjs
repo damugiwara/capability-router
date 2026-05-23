@@ -20,7 +20,7 @@ async function writeJson(file, value) {
 }
 
 export function capabilityText(record) {
-  return [record.kind, record.name, record.description, ...(record.capabilities ?? [])]
+  return [record.kind, record.name, record.provider, record.source, record.description, ...(record.capabilities ?? []), record.profileText]
     .filter(Boolean)
     .join(" ");
 }
@@ -31,7 +31,10 @@ export function capabilityHash(record) {
     kind: record.kind,
     name: record.name,
     description: record.description,
-    capabilities: record.capabilities ?? []
+    capabilities: record.capabilities ?? [],
+    provider: record.provider ?? null,
+    source: record.source ?? null,
+    profileText: record.profileText ?? ""
   });
 }
 

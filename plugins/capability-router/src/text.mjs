@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 const STOP_WORDS = new Set([
   "a",
   "an",
@@ -21,8 +23,6 @@ const STOP_WORDS = new Set([
   "the",
   "this",
   "to",
-  "set",
-  "up",
   "use",
   "using",
   "when",
@@ -30,185 +30,226 @@ const STOP_WORDS = new Set([
   "you"
 ]);
 
-export function tokenize(text) {
+function splitIdentifier(text) {
   return String(text ?? "")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/[^A-Za-z0-9+.-]+/g, " ")
+    .replace(/[_.:/\\-]+/g, " ");
+}
+
+function baseTokens(text) {
+  return splitIdentifier(text)
     .toLowerCase()
-    .replace(/[^a-z0-9_.:-]+/g, " ")
     .split(/\s+/)
+    .map((token) => token.trim())
     .filter((token) => token.length > 1 && !STOP_WORDS.has(token));
 }
 
-export function inferCapabilities(text) {
-  const source = String(text ?? "").toLowerCase();
-  const capabilities = new Set();
-  const checks = [
-    ["network", /\b(web|internet|url|website|wikipedia|browser|search|http|https|online|current|latest)\b/],
-    ["web", /\b(web|internet|url|website|wikipedia|search|http|https|online|page|citation|citations|source|sources)\b/],
-    ["browser", /\b(browser|click|screenshot|page|dom|localhost)\b/],
-    ["filesystem", /\b(file|files|folder|directory|repo|project|source|code|edit|patch|test|build|shell|terminal)\b/],
-    ["editing", /\b(edit|modify|patch|write|create|change|fix|repair|implement)\b/],
-    ["planning", /\b(plan|break down|roadmap|steps|checklist)\b/],
-    ["image", /\b(image|picture|photo|generate|edit image|logo)\b/],
-    ["database", /\b(database|sql|postgres|supabase|table|query)\b/],
-    ["research", /\b(research|summarize|source|cite|look up|find)\b/]
-  ];
-
-  for (const [capability, pattern] of checks) {
-    if (pattern.test(source)) capabilities.add(capability);
-  }
-  return [...capabilities];
+function normalizeQueryText(text) {
+  return String(text ?? "")
+    .replace(/https?:\/\/\S+/gi, " url website webpage page ")
+    .replace(/\b[\w.-]+[\\/][\w./\\-]+\b/g, " path folder file ");
 }
 
-export function scoreText(query, record) {
-  const queryTokens = tokenize(query);
-  const recordText = [record.kind, record.name, record.description, ...(record.capabilities ?? [])].join(" ");
-  const recordTokens = new Set(tokenize(recordText));
-  const matches = queryTokens.filter((token) => recordTokens.has(token));
-  const exactNameBoost = String(query).toLowerCase().includes(String(record.name).toLowerCase()) ? 2 : 0;
-  const inferred = inferCapabilities(query);
-  const capabilityBoost = inferred.filter((capability) => (record.capabilities ?? []).includes(capability)).length;
-  const intentBoost = scoreIntent(query, record, inferred);
-  const score = matches.length + exactNameBoost + capabilityBoost * 1.5 + intentBoost;
-  return { score, matches };
-}
+export function tokenize(text) {
+  const tokens = baseTokens(text);
+  const expanded = new Set();
 
-function scoreIntent(query, record, inferred) {
-  const source = String(query ?? "").toLowerCase();
-  const recordText = [record.kind, record.name, record.description, ...(record.capabilities ?? [])].join(" ").toLowerCase();
-  let boost = 0;
-
-  if (inferred.includes("web") && record.kind === "tool" && ["web.open", "web.search_query"].includes(record.name)) {
-    boost += source.includes("search") || source.includes("find") ? 3 : 4;
-  }
-
-  if (isCurrentWebResearch(source)) {
-    if (record.name === "web.search_query") boost += 10;
-    if (record.name === "web.open") boost += 6;
-    if (record.kind === "skill" && /\b(docs?|documentation|openai-docs)\b/.test(recordText)) boost -= 4;
-  }
-
-  if (isImageTask(source)) {
-    if (record.name === "image_gen.imagegen" || record.name === "imagegen") boost += 9;
-    if (record.name === "functions.apply_patch") boost -= 8;
-  }
-
-  if (/\b(edit|modify|patch|fix|repair|implement|source code)\b/.test(source)) {
-    if (record.name === "functions.apply_patch") boost += 5;
-    if (record.name === "functions.shell_command") boost += 2;
-  }
-
-  if (/\b(test|build|run|shell|terminal|command)\b/.test(source) && record.name === "functions.shell_command") {
-    boost += 5;
-  }
-
-  if (isLocalCodeEdit(source)) {
-    if (record.name === "functions.apply_patch") boost += 6;
-    if (record.name === "functions.shell_command") boost += 3;
-    if (/\b(lfg|autonomous|pipeline|brainstorm|plan)\b/.test(recordText)) boost -= 4;
-  }
-
-  if (isFocusedCommandTask(source)) {
-    if (record.name === "functions.shell_command") boost += 7;
-    if (record.kind === "skill" && /\b(lfg|autonomous|pipeline|brainstorm|plan)\b/.test(recordText)) boost -= 5;
-  }
-
-  if (isLocalDocumentationEdit(source)) {
-    if (record.name === "functions.apply_patch") boost += 8;
-    if (record.name === "functions.shell_command") boost += 3;
-    if (!source.includes("figma") && /\bfigma\b/.test(recordText)) boost -= 8;
-    if (/\b(strategy|planning|threat-model)\b/.test(recordText)) boost -= 3;
-  }
-
-  if (isSecurityScan(source)) {
-    if (/\b(codex-security|security-scan|insecure-defaults|semgrep|codeql|supply-chain|audit-prep)\b/.test(recordText)) {
-      boost += 9;
+  for (const token of tokens) {
+    expanded.add(token);
+    for (const variant of tokenVariants(token)) {
+      if (variant.length > 1 && !STOP_WORDS.has(variant)) expanded.add(variant);
     }
-    if (record.name === "functions.shell_command") boost -= 4;
-    if (/\b(optimizer|operator|vault|obsidian)\b/.test(recordText)) boost -= 7;
   }
 
-  if (isSourceCodeAudit(source)) {
-    if (record.name === "functions.shell_command") boost += 7;
-    if (record.name === "functions.apply_patch") boost += 5;
-    if (/\b(security|semgrep|codeql|review|c-review|scan|audit|bug|test)\b/.test(recordText)) boost += 4;
-    if (/\b(optimizer|operator|vault|database|notes|obsidian)\b/.test(recordText)) boost -= 7;
+  return [...expanded];
+}
+
+function queryTermWeights(text) {
+  const weights = new Map();
+  const tokens = baseTokens(normalizeQueryText(text));
+
+  tokens.forEach((token, index) => {
+    const positionalWeight = 1 + Math.max(0, 0.8 - index * 0.08);
+    weights.set(token, Math.max(weights.get(token) ?? 0, positionalWeight));
+    for (const variant of tokenVariants(token)) {
+      if (variant.length > 1 && !STOP_WORDS.has(variant)) {
+        weights.set(variant, Math.max(weights.get(variant) ?? 0, positionalWeight * 0.8));
+      }
+    }
+  });
+
+  return weights;
+}
+
+function tokenVariants(token) {
+  const variants = [];
+  if (token.includes("+")) {
+    variants.push(token.replace(/\+/g, "p"), token.replace(/\+/g, "plus"));
+  }
+  if (token.endsWith("ing") && token.length > 5) {
+    const root = token.slice(0, -3);
+    variants.push(root);
+    if (/(at|it|ak|iv|iz)$/.test(root)) variants.push(`${root}e`);
+  }
+  if (token.endsWith("ed") && token.length > 4) variants.push(token.slice(0, -2));
+  if (token.endsWith("ies") && token.length > 5) variants.push(`${token.slice(0, -3)}y`);
+  if (token.endsWith("s") && token.length > 4) variants.push(token.slice(0, -1));
+  if ((token.endsWith("er") || token.endsWith("or")) && token.length > 5) {
+    const root = token.slice(0, -2);
+    variants.push(root, `${root}e`);
+  }
+  if (token.endsWith("ion") && token.length > 6) {
+    const root = token.slice(0, -3);
+    variants.push(root, `${root}e`);
+  }
+  return variants;
+}
+
+function stableHash(value) {
+  return createHash("sha256").update(JSON.stringify(value)).digest("hex");
+}
+
+function compactText(value, maxLength = 1600) {
+  return String(value ?? "")
+    .replace(/^---[\s\S]*?---/m, " ")
+    .replace(/[`*_#[\](){}>~-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, maxLength);
+}
+
+export function buildCapabilityProfile(record) {
+  const weightedFields = [
+    [record.id, 2],
+    [record.kind, 0.5],
+    [record.name, 4],
+    [(record.capabilities ?? []).join(" "), 3],
+    [record.description, 2],
+    [record.provider, 0.4],
+    [record.source, 0.25],
+    [record.profileText, 0.35]
+  ];
+  const text = compactText(weightedFields.map(([value]) => value).filter(Boolean).join(" "));
+  const termCounts = new Map();
+  let length = 0;
+
+  for (const [value, weight] of weightedFields) {
+    for (const term of tokenize(value)) {
+      termCounts.set(term, (termCounts.get(term) ?? 0) + weight);
+      length += weight;
+    }
+  }
+  const terms = [...termCounts.keys()];
+
+  return {
+    id: record.id,
+    kind: record.kind,
+    name: record.name,
+    text,
+    terms,
+    termCounts,
+    length,
+    profileHash: stableHash({
+      id: record.id,
+      kind: record.kind,
+      name: record.name,
+      provider: record.provider ?? null,
+      source: record.source ?? null,
+      description: record.description ?? "",
+      capabilities: record.capabilities ?? [],
+      profileText: record.profileText ?? ""
+    })
+  };
+}
+
+export function buildCorpusStats(records) {
+  const profiles = new Map();
+  const documentFrequency = new Map();
+  let totalLength = 0;
+
+  for (const record of records) {
+    const profile = buildCapabilityProfile(record);
+    profiles.set(record.id, profile);
+    totalLength += profile.length;
+
+    for (const term of new Set(profile.terms)) {
+      documentFrequency.set(term, (documentFrequency.get(term) ?? 0) + 1);
+    }
   }
 
-  if (isOpenAiDocsTask(source)) {
-    if (record.name === "openai-docs") boost += 11;
-    if (record.name === "chatgpt-apps") boost += 4;
-    if (record.name === "capability-router" && !source.includes("capability router")) boost -= 8;
+  return {
+    totalDocuments: records.length,
+    averageLength: records.length ? totalLength / records.length : 0,
+    documentFrequency,
+    profiles
+  };
+}
+
+function idf(term, stats) {
+  const total = Math.max(1, stats.totalDocuments ?? 0);
+  const frequency = stats.documentFrequency?.get(term) ?? 0;
+  return Math.log(1 + (total - frequency + 0.5) / (frequency + 0.5));
+}
+
+function bm25(queryWeights, profile, stats) {
+  const averageLength = stats.averageLength || profile.length || 1;
+  const k1 = 1.2;
+  const b = 0.75;
+  let score = 0;
+
+  for (const [term, queryWeight] of queryWeights) {
+    const frequency = profile.termCounts.get(term) ?? 0;
+    if (!frequency) continue;
+    const denominator = frequency + k1 * (1 - b + b * (profile.length / averageLength));
+    score += queryWeight * idf(term, stats) * ((frequency * (k1 + 1)) / denominator);
   }
 
-  if (isGitHubCliTask(source)) {
-    if (record.name === "gh-cli") boost += 11;
-    if (record.name === "functions.shell_command") boost += 7;
-    if (record.name === "ce-commit-push-pr") boost += 3;
-    if (record.name === "yeet") boost -= 8;
+  return score;
+}
+
+function phraseOverlap(queryTerms, profile) {
+  if (!queryTerms.length || !profile.terms.length) return 0;
+  const recordPhrases = [
+    tokenize(profile.name).join(" "),
+    profile.id ? tokenize(profile.id).join(" ") : ""
+  ].filter(Boolean);
+  const queryText = queryTerms.join(" ");
+  let score = 0;
+
+  for (const phrase of recordPhrases) {
+    if (phrase && queryText.includes(phrase)) {
+      score += Math.min(4, phrase.split(/\s+/).length);
+    }
   }
 
-  if (isFuzzingTask(source)) {
-    if (/\b(aflpp|afl\+\+|libfuzzer|cargo-fuzz|harness-writing|fuzzing)\b/.test(recordText)) boost += 12;
-    if (/\b(afl\+\+|aflpp)\b/.test(source) && record.name === "aflpp") boost += 16;
-    if (/\bc\b/.test(source) && /\b(libfuzzer|harness-writing)\b/.test(recordText)) boost += 4;
-    if (record.name === "genotoxic") boost -= 6;
-    if (/\b(deploy|operator|optimizer|vault|strategy)\b/.test(recordText)) boost -= 8;
-  }
-
-  return boost;
+  return score;
 }
 
-function isImageTask(source) {
-  return /\b(image|photo|picture|logo|mockup|background|sneaker|raster)\b/.test(source);
+function nameCoverage(queryTerms, profile) {
+  const nameTerms = baseTokens(profile.name);
+  if (!nameTerms.length) return 0;
+  const querySet = new Set(queryTerms);
+  const matched = nameTerms.filter((term) => {
+    if (querySet.has(term)) return true;
+    return tokenVariants(term).some((variant) => querySet.has(variant));
+  }).length;
+  const coverage = matched / nameTerms.length;
+  return matched ? coverage * coverage * 14 : 0;
 }
 
-function isCurrentWebResearch(source) {
-  return (
-    /\b(current|latest|recent|today|pricing|price|sources?|cite|citations?)\b/.test(source) &&
-    /\b(research|search|look up|find|pricing|price|sources?|cite|citations?)\b/.test(source)
-  );
-}
+export function scoreText(query, record, stats = null) {
+  const corpusStats = stats ?? buildCorpusStats([record]);
+  const profile = corpusStats.profiles?.get(record.id) ?? buildCapabilityProfile(record);
+  const queryWeights = queryTermWeights(query);
+  const queryTerms = [...queryWeights.keys()];
+  const querySet = new Set(queryTerms);
+  const matches = [...new Set(profile.terms.filter((term) => querySet.has(term)))];
+  const score = bm25(queryWeights, profile, corpusStats) + phraseOverlap(queryTerms, profile) + nameCoverage(queryTerms, profile);
 
-function isSourceCodeAudit(source) {
-  return (
-    /\b(audit|review|bugs?|maintainability|missing tests?|improvements?|quality|issues?)\b/.test(source) &&
-    /\b(code|source|repo|repository|project|folder|directory|plugin|package|files?)\b/.test(source)
-  );
-}
-
-function isLocalCodeEdit(source) {
-  return (
-    /\b(edit|modify|patch|fix|repair|implement|change)\b/.test(source) &&
-    /\b(local|code|source|file|component|repo|repository|project|package)\b/.test(source)
-  );
-}
-
-function isFocusedCommandTask(source) {
-  return (
-    /\b(run|execute|inspect|check)\b/.test(source) &&
-    /\b(test|tests|suite|build|lint|command|terminal|package)\b/.test(source)
-  );
-}
-
-function isLocalDocumentationEdit(source) {
-  return (
-    /\b(create|edit|write|add|update)\b/.test(source) &&
-    /\b(readme|repository|repo|install|section|markdown|documentation|docs)\b/.test(source)
-  );
-}
-
-function isSecurityScan(source) {
-  return /\b(security|insecure|vulnerab|semgrep|codeql|scan|hardcoded|secret|api key)\b/.test(source);
-}
-
-function isOpenAiDocsTask(source) {
-  return /\b(openai|chatgpt|responses api|assistants api|agents sdk)\b/.test(source);
-}
-
-function isGitHubCliTask(source) {
-  return /\b(github|gh)\b/.test(source) && /\b(cli|issues?|pull request|pr|repo)\b/.test(source);
-}
-
-function isFuzzingTask(source) {
-  return /\b(fuzz|fuzzing|afl\+\+|aflpp|libfuzzer|harness)\b/.test(source);
+  return {
+    score,
+    matches,
+    profileHash: profile.profileHash
+  };
 }

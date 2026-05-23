@@ -10,6 +10,7 @@ import { refreshRegistry } from "../src/indexer.mjs";
 import { applyPolicy } from "../src/policy.mjs";
 import { getSemanticCache, setSemanticCache } from "../src/semantic-cache.mjs";
 import { selectCapabilities } from "../src/selector.mjs";
+import { buildCapabilityProfile, buildCorpusStats, scoreText } from "../src/text.mjs";
 import { refreshVectorStore, searchVectorStore } from "../src/vector-store.mjs";
 
 async function makeFixture() {
@@ -27,7 +28,9 @@ async function makeFixture() {
       "description: Use when the user asks how to build with OpenAI APIs, Agents SDK, or ChatGPT Apps.",
       "---",
       "",
-      "# OpenAI Docs"
+      "# OpenAI Docs",
+      "",
+      "Use official OpenAI documentation for API tools, rate limits, responses, and model behavior."
     ].join("\n")
   );
 
@@ -62,6 +65,76 @@ test("refreshRegistry scans skills and plugin manifests into compact capability 
   assert.ok(registry.records.every((record) => record.description.length > 20));
 });
 
+test("scanSkills indexes a capped skill body excerpt for metadata-driven routing", async () => {
+  const root = await makeFixture();
+  const registry = await refreshRegistry({ roots: [root], cacheDir: path.join(root, ".cache") });
+  const skill = registry.records.find((record) => record.name === "openai-docs");
+
+  assert.match(skill.profileText, /official openai documentation/i);
+  assert.match(skill.profileText, /rate limits/i);
+});
+
+test("buildCapabilityProfile uses metadata without domain-specific scoring branches", () => {
+  const profile = buildCapabilityProfile({
+    id: "skill:example-reviewer",
+    kind: "skill",
+    name: "example-reviewer",
+    description: "Reviews local modules and reports maintainability issues.",
+    provider: "example-plugin",
+    source: "C:/tools/example-plugin/skills/example-reviewer/SKILL.md",
+    capabilities: ["filesystem", "review"],
+    profileText: "Use this skill when reviewing source modules."
+  });
+
+  assert.equal(profile.id, "skill:example-reviewer");
+  assert.ok(profile.terms.includes("example"));
+  assert.ok(profile.terms.includes("reviewer"));
+  assert.ok(profile.terms.includes("filesystem"));
+  assert.ok(profile.terms.includes("source"));
+  assert.ok(profile.profileHash.length > 20);
+});
+
+test("BM25 scoring favors rare metadata terms over generic words", () => {
+  const records = [
+    {
+      id: "skill:generic",
+      kind: "skill",
+      name: "generic",
+      description: "Create set up edit files and run common project tasks.",
+      capabilities: ["filesystem"]
+    },
+    {
+      id: "skill:aflpp",
+      kind: "skill",
+      name: "aflpp",
+      description: "AFL++ coverage guided fuzzing for C and C++ libraries.",
+      capabilities: ["filesystem", "testing"]
+    }
+  ];
+  const stats = buildCorpusStats(records);
+
+  const generic = scoreText("Set up AFL++ fuzzing for this C library", records[0], stats);
+  const specific = scoreText("Set up AFL++ fuzzing for this C library", records[1], stats);
+
+  assert.ok(specific.score > generic.score);
+});
+
+test("production scorer does not contain hardcoded routing branches", async () => {
+  const source = await readFile(new URL("../src/text.mjs", import.meta.url), "utf8");
+  const forbidden = [
+    /record\.name\s*===/,
+    /function\s+is[A-Z][A-Za-z]+Task/,
+    /scoreIntent/,
+    /boost\s*\+=/,
+    /boost\s*-=/,
+    /aflpp|openai-docs|gh-cli|image_gen|functions\.shell_command|functions\.apply_patch/
+  ];
+
+  for (const pattern of forbidden) {
+    assert.doesNotMatch(source, pattern);
+  }
+});
+
 test("selectCapabilities ranks relevant records and reports context savings", async () => {
   const root = await makeFixture();
   const registry = await refreshRegistry({ roots: [root], cacheDir: path.join(root, ".cache") });
@@ -84,14 +157,14 @@ test("selectCapabilities prefers web tools over generic research skills for Wiki
       id: "tool:web.open",
       kind: "tool",
       name: "web.open",
-      description: "Open a public web page or URL and read content for source-grounded answers.",
+      description: "Open a public web page, URL, or Wikipedia page and read content for source-grounded answers with citations.",
       capabilities: ["network", "web", "research"]
     },
     {
       id: "skill:generic-research",
       kind: "skill",
       name: "generic-research",
-      description: "Use for research, summarize, planning, and editing workflows.",
+      description: "Use for broad research, planning, and editing workflows.",
       capabilities: ["network", "research", "editing", "planning"]
     }
   ];
@@ -148,7 +221,7 @@ test("vector store persists local embeddings and retrieves semantic capability m
       id: "tool:functions.apply_patch",
       kind: "tool",
       name: "functions.apply_patch",
-      description: "Edit local files using patch hunks for precise code changes.",
+      description: "Edit local files using patch hunks for precise code changes, fixes, repairs, and failing test updates.",
       capabilities: ["filesystem", "editing"]
     },
     {
@@ -180,7 +253,7 @@ test("selectCapabilities can use local vector retrieval and reports vector mode"
       id: "tool:functions.apply_patch",
       kind: "tool",
       name: "functions.apply_patch",
-      description: "Edit local files using patch hunks for precise code changes.",
+      description: "Edit local files using patch hunks for precise code changes, fixes, failing tests, and component repairs.",
       capabilities: ["filesystem", "editing"]
     },
     {
@@ -270,7 +343,7 @@ test("selectCapabilities reports semantic cache hits for similar requests", asyn
       id: "tool:functions.apply_patch",
       kind: "tool",
       name: "functions.apply_patch",
-      description: "Edit local files using patch hunks for precise code changes.",
+      description: "Edit local files using patch hunks for precise code changes, fixes, failing tests, and component repairs.",
       capabilities: ["filesystem", "editing"]
     },
     {
@@ -341,14 +414,14 @@ test("selectCapabilities prefers source-code audit tools over broad optimizer sk
       id: "tool:functions.shell_command",
       kind: "tool",
       name: "functions.shell_command",
-      description: "Run PowerShell commands for local filesystem inspection, tests, builds, and command-line tools.",
+      description: "Run PowerShell commands for local filesystem inspection, tests, builds, source code audits, bug searches, and command-line tools.",
       capabilities: ["filesystem", "shell", "execution"]
     },
     {
       id: "tool:functions.apply_patch",
       kind: "tool",
       name: "functions.apply_patch",
-      description: "Edit local files using patch hunks for precise code changes.",
+      description: "Edit local files using patch hunks for precise code changes, audit fixes, bug repairs, maintainability improvements, and missing test updates.",
       capabilities: ["filesystem", "editing"]
     },
     {

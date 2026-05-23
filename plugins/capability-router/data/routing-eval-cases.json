@@ -166,5 +166,187 @@
     "query": "Use Capability Router to choose the best tool for this task",
     "expectedAny": ["plugin:capability-router", "skill:capability-router"],
     "mustNotTop1": ["plugin:spreadsheets"]
+  },
+  {
+    "id": "sarif-parsing",
+    "category": "security",
+    "query": "Parse this SARIF report and group findings by rule severity",
+    "expectedAny": ["skill:sarif-parsing"],
+    "mustNotTop1": ["plugin:spreadsheets"]
+  },
+  {
+    "id": "supply-chain-risk",
+    "category": "security",
+    "query": "Find supply-chain risks in npm dependencies and lockfiles",
+    "expectedAny": ["skill:supply-chain-risk-auditor"],
+    "mustNotTop1": ["tool:image_gen.imagegen"]
+  },
+  {
+    "id": "property-based-testing",
+    "category": "testing",
+    "query": "Check this Rust crate for property based testing opportunities",
+    "expectedAny": ["skill:property-based-testing"],
+    "mustNotTop1": ["tool:web.search_query"]
+  },
+  {
+    "id": "cargo-fuzz-harness",
+    "category": "fuzzing",
+    "query": "Create a fuzzing harness for a Rust parser with cargo-fuzz",
+    "expectedAny": ["skill:cargo-fuzz", "skill:harness-writing"],
+    "mustNotTop1": ["plugin:documents"]
+  },
+  {
+    "id": "token-integration",
+    "category": "security",
+    "query": "Analyze this Solidity token integration for missing return checks",
+    "expectedAny": ["skill:token-integration-analyzer"],
+    "mustNotTop1": ["plugin:spreadsheets"]
+  },
+  {
+    "id": "crypto-protocol-diagram",
+    "category": "diagram",
+    "query": "Build a Mermaid sequence diagram for this cryptographic protocol",
+    "expectedAny": ["skill:crypto-protocol-diagram", "skill:mermaid-to-proverif", "skill:diagramming-code"],
+    "mustNotTop1": ["tool:image_gen.imagegen"]
+  },
+  {
+    "id": "trailmark-structural",
+    "category": "code-analysis",
+    "query": "Run Trailmark structural analysis and find entry points",
+    "expectedAny": ["skill:trailmark-structural", "skill:trailmark", "skill:trailmark-summary"],
+    "mustNotTop1": ["plugin:documents"]
+  },
+  {
+    "id": "github-actions-audit",
+    "category": "security",
+    "query": "Scan GitHub Actions workflows for unsafe pull_request_target usage",
+    "expectedAny": ["skill:agentic-actions-auditor", "skill:security-scan"],
+    "mustNotTop1": ["plugin:spreadsheets"]
+  },
+  {
+    "id": "semgrep-insecure-defaults",
+    "category": "security",
+    "query": "Use Semgrep to scan this Python service for insecure defaults",
+    "expectedAny": ["skill:insecure-defaults", "skill:semgrep"],
+    "mustNotTop1": ["tool:image_gen.imagegen"]
+  },
+  {
+    "id": "yara-rule",
+    "category": "security",
+    "query": "Create a custom YARA rule for suspicious PowerShell downloaders",
+    "expectedAny": ["skill:yara-rule-authoring"],
+    "mustNotTop1": ["plugin:presentations"]
+  },
+  {
+    "id": "browser-responsive-layout",
+    "category": "browser",
+    "query": "Open a local file in the browser and verify responsive layout at mobile size",
+    "expectedAny": ["plugin:browser", "skill:browser", "skill:ce-test-browser"],
+    "mustNotTop1": ["tool:web.search_query"]
+  },
+  {
+    "id": "spreadsheet-pivot",
+    "category": "spreadsheet",
+    "query": "Update this Excel workbook and make a pivot chart",
+    "expectedAny": ["plugin:spreadsheets", "skill:Spreadsheets"],
+    "mustNotTop1": ["tool:image_gen.imagegen"]
+  },
+  {
+    "id": "slides-from-notes",
+    "category": "presentation",
+    "query": "Create a Google Slides style deck from these notes",
+    "expectedAny": ["plugin:presentations", "skill:Presentations"],
+    "mustNotTop1": ["plugin:spreadsheets"]
+  },
+  {
+    "id": "supabase-rls",
+    "category": "database",
+    "query": "Inspect Supabase RLS policies and recommend fixes",
+    "expectedAny": ["plugin:supabase", "skill:supabase", "skill:supabase-postgres-best-practices"],
+    "mustNotTop1": ["tool:image_gen.imagegen"]
+  },
+  {
+    "id": "obsidian-vault-setup",
+    "category": "knowledge-management",
+    "query": "Create an Obsidian vault setup for meeting notes and tasks",
+    "expectedAny": ["plugin:obsidian-os", "skill:os-setup", "skill:team-os"],
+    "mustNotTop1": ["plugin:spreadsheets"]
+  },
+  {
+    "id": "github-private-repo",
+    "category": "github",
+    "query": "Use gh to create a private GitHub repository and push this branch",
+    "expectedAny": ["skill:gh-cli", "tool:functions.shell_command"],
+    "mustNotTop1": ["tool:image_gen.imagegen"]
+  },
+  {
+    "id": "latest-node-research",
+    "category": "web",
+    "query": "Research the latest Node.js LTS release and cite official sources",
+    "expectedAny": ["tool:web.search_query", "tool:web.open"],
+    "mustNotTop1": ["plugin:spreadsheets"]
+  },
+  {
+    "id": "open-react-docs",
+    "category": "web",
+    "query": "Open the official React documentation page and summarize useEffect",
+    "expectedAny": ["tool:web.open", "tool:web.search_query"],
+    "mustNotTop1": ["tool:image_gen.imagegen"]
+  },
+  {
+    "id": "logo-image",
+    "category": "image",
+    "query": "Generate a logo image for a local bakery with transparent background",
+    "expectedAny": ["tool:image_gen.imagegen", "skill:imagegen"],
+    "mustNotTop1": ["tool:functions.shell_command"]
+  },
+  {
+    "id": "security-pr-review",
+    "category": "security",
+    "query": "Review this pull request diff for security regressions",
+    "expectedAny": ["skill:security-scan", "plugin:codex-security", "skill:differential-review", "skill:c-review"],
+    "mustNotTop1": ["plugin:spreadsheets"]
+  },
+  {
+    "id": "fix-security-finding",
+    "category": "security",
+    "query": "Fix a validated security finding and verify the patch",
+    "expectedAny": ["skill:fix-finding", "skill:validation", "skill:security-scan"],
+    "mustNotTop1": ["tool:image_gen.imagegen"]
+  },
+  {
+    "id": "address-sanitizer",
+    "category": "security",
+    "query": "Set up AddressSanitizer for this C project and triage crashes",
+    "expectedAny": ["skill:address-sanitizer"],
+    "mustNotTop1": ["plugin:spreadsheets"]
+  },
+  {
+    "id": "mutation-testing",
+    "category": "testing",
+    "query": "Run mutation testing on this Python package and summarize surviving mutants",
+    "expectedAny": ["skill:mutation-testing"],
+    "mustNotTop1": ["tool:image_gen.imagegen"]
+  },
+  {
+    "id": "code-maturity",
+    "category": "code-review",
+    "query": "Assess code maturity for this repository using quality categories",
+    "expectedAny": ["skill:code-maturity-assessor"],
+    "mustNotTop1": ["plugin:presentations"]
+  },
+  {
+    "id": "devcontainer-setup",
+    "category": "environment",
+    "query": "Create a devcontainer for a Python project with uv and ruff",
+    "expectedAny": ["skill:devcontainer-setup", "skill:modern-python"],
+    "mustNotTop1": ["plugin:documents"]
+  },
+  {
+    "id": "modern-python",
+    "category": "python",
+    "query": "Configure a modern Python package with pyproject, ruff, and tests",
+    "expectedAny": ["skill:modern-python", "skill:devcontainer-setup"],
+    "mustNotTop1": ["plugin:spreadsheets"]
   }
 ]

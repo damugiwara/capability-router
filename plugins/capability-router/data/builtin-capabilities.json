@@ -3,42 +3,48 @@
     "id": "tool:web.open",
     "kind": "tool",
     "name": "web.open",
-    "description": "Open a public web page or URL and read content for source-grounded answers.",
-    "capabilities": ["network", "web", "research"]
+    "description": "Open a public web page, URL, website, documentation page, article, or source and read its content for source-grounded answers and citations.",
+    "capabilities": ["network", "web", "research", "url", "citation"],
+    "profileText": "Use for open URL, read webpage, summarize page, inspect public source, cite source, fetch specific link, http, https, website content."
   },
   {
     "id": "tool:web.search_query",
     "kind": "tool",
     "name": "web.search_query",
-    "description": "Search the internet when the user asks for current, recent, external, or source-attributed information.",
-    "capabilities": ["network", "web", "search", "research"]
+    "description": "Search the internet when the user asks for current, latest, recent, external, price, pricing, news, law, source-attributed, or citation-backed information.",
+    "capabilities": ["network", "web", "search", "research", "current", "citation"],
+    "profileText": "Use for look up, find online, research current facts, latest information, recent updates, pricing, cite sources, source attribution."
   },
   {
     "id": "tool:functions.shell_command",
     "kind": "tool",
     "name": "functions.shell_command",
-    "description": "Run PowerShell commands for local filesystem inspection, tests, builds, and command-line tools.",
-    "capabilities": ["filesystem", "shell", "execution"]
+    "description": "Run PowerShell commands for local filesystem inspection, listing files, finding files, command-line tools, focused test suites, failures, builds, npm, pytest, git, and terminal execution.",
+    "capabilities": ["filesystem", "shell", "execution", "test", "build", "local"],
+    "profileText": "Use for run command, list directory, find TypeScript files, inspect repo, focused test suite, inspect failures, run tests, run build, npm install, pytest, git command, terminal output, command line, source code audit, bug search, maintainability inspection."
   },
   {
     "id": "tool:functions.apply_patch",
     "kind": "tool",
     "name": "functions.apply_patch",
-    "description": "Edit local files using patch hunks for precise code changes.",
-    "capabilities": ["filesystem", "editing"]
+    "description": "Edit, create, update, refactor, repair, or modify local files using precise patch hunks for code, README, config, docs, tests, audit fixes, maintainability improvements, and source changes.",
+    "capabilities": ["filesystem", "editing", "local", "code"],
+    "profileText": "Use for edit file, create file, update README, create config, refactor module, fix code, repair test, modify source, write documentation in repository, address audit findings, fix bugs, add missing tests."
   },
   {
     "id": "tool:image_gen.imagegen",
     "kind": "tool",
     "name": "image_gen.imagegen",
-    "description": "Generate or edit raster images from prompts or provided images.",
-    "capabilities": ["image", "generation", "editing"]
+    "description": "Generate or edit raster images, pictures, photos, logos, product mockups, avatars, transparent backgrounds, and visual renders from prompts or provided images.",
+    "capabilities": ["image", "generation", "editing", "photo", "visual"],
+    "profileText": "Use for image generation, photo edit, remove background, logo, avatar, product render, mockup, raster visual, attached image edit."
   },
   {
     "id": "tool:functions.update_plan",
     "kind": "tool",
     "name": "functions.update_plan",
-    "description": "Track multi-step task progress with a visible plan checklist.",
-    "capabilities": ["planning", "status"]
+    "description": "Track multi-step task progress with a visible plan checklist for implementation plans, milestones, refactors, and status updates.",
+    "capabilities": ["planning", "status", "checklist"],
+    "profileText": "Use for step by step plan, implementation milestones, task checklist, progress tracking, multi-stage refactor plan."
   }
 ]

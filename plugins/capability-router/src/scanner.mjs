@@ -1,8 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
-import { inferCapabilities } from "./text.mjs";
-
 async function exists(file) {
   try {
     await readFile(file);
@@ -57,6 +55,60 @@ function parseFrontmatter(markdown) {
   return result;
 }
 
+function cleanMarkdownLine(line) {
+  return line
+    .replace(/^[#>\s-]*\s*/, "")
+    .replace(/^[0-9]+[.)]\s*/, "")
+    .replace(/[`*_()[\]{}]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function bodyExcerpt(markdown, maxLength = 2200) {
+  const body = markdown.replace(/^---\r?\n[\s\S]*?\r?\n---/, "");
+  const lines = body.split(/\r?\n/);
+  const outline = [];
+  const seen = new Set();
+
+  const pushUnique = (value) => {
+    const cleaned = cleanMarkdownLine(value);
+    if (!cleaned || seen.has(cleaned.toLowerCase())) return;
+    seen.add(cleaned.toLowerCase());
+    outline.push(cleaned);
+  };
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (
+      /^#{1,4}\s+/.test(trimmed) ||
+      /^[-*]\s+/.test(trimmed) ||
+      /^[0-9]+[.)]\s+/.test(trimmed) ||
+      /--[A-Za-z0-9-]+/.test(trimmed) ||
+      /\.(json|md|yaml|yml|toml|js|mjs|py|ts|tsx)\b/i.test(trimmed)
+    ) {
+      pushUnique(trimmed);
+    }
+  }
+
+  body
+    .replace(/```[\s\S]*?```/g, " ")
+    .split(/\r?\n/)
+    .map(cleanMarkdownLine)
+    .filter(Boolean)
+    .slice(0, 8)
+    .forEach(pushUnique);
+
+  return outline.join(" ").replace(/\s+/g, " ").trim().slice(0, maxLength);
+}
+
+function parseList(value) {
+  if (Array.isArray(value)) return value;
+  return String(value ?? "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 export async function scanSkills(root) {
   const files = await walk(root, (file) => path.basename(file) === "SKILL.md");
   const records = [];
@@ -71,7 +123,8 @@ export async function scanSkills(root) {
       description: frontmatter.description,
       source: file,
       provider: path.basename(path.dirname(path.dirname(file))),
-      capabilities: inferCapabilities(`${frontmatter.name} ${frontmatter.description}`)
+      capabilities: parseList(frontmatter.capabilities),
+      profileText: bodyExcerpt(text)
     });
   }
   return records;
@@ -98,7 +151,17 @@ export async function scanPlugins(root) {
       description,
       source: file,
       provider: manifest.interface?.developerName ?? manifest.author?.name ?? "unknown",
-      capabilities: inferCapabilities(`${manifest.name} ${description}`)
+      capabilities: [
+        ...(manifest.keywords ?? []),
+        ...(manifest.interface?.capabilities ?? [])
+      ].map((capability) => String(capability).toLowerCase()),
+      profileText: [
+        manifest.interface?.displayName,
+        ...(manifest.interface?.defaultPrompt ?? []),
+        manifest.interface?.category
+      ]
+        .filter(Boolean)
+        .join(" ")
     });
   }
   return records;

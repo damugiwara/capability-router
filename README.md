@@ -95,7 +95,7 @@ If a command does not appear immediately in Codex, restart the Codex app or relo
 6. The local embedding layer turns capability records and the user request into deterministic hashed vectors.
 7. The vector store persists capability vectors in `data/vectors.json` and retrieves nearest matches with cosine similarity.
 8. The semantic result cache stores prior selections in `data/semantic-cache.json` and reuses them for similar requests when the capability set and constraints are unchanged.
-9. The selector combines vector similarity with lexical scoring, inferred intent tags, and task-specific boosts.
+9. The selector combines BM25-style lexical scoring, local vector similarity, exact name/phrase overlap, and generic positional query weighting. It does not use domain-specific production routing rules.
 10. The policy layer applies soft masking constraints such as disallowed network access.
 11. The MCP server returns only the top relevant candidates, confidence scores, reasons, and context-savings metadata.
 
@@ -140,7 +140,7 @@ Run routing quality evals:
 npm run eval --prefix plugins/capability-router
 ```
 
-The eval suite covers web research, browser automation, image work, local code edits, test execution, security, Supabase, spreadsheets, documents, presentations, OpenAI docs, plugin/skill authoring, GitHub CLI, planning, frontend, iOS, fuzzing, and router-specific requests.
+The 50-case eval suite covers web research, browser automation, image work, local code edits, test execution, security, Supabase, spreadsheets, documents, presentations, OpenAI docs, plugin/skill authoring, GitHub CLI, planning, frontend, iOS, fuzzing, RAG/router-specific requests, and specialized security/testing workflows.
 
 Register or refresh the Codex MCP config:
 
