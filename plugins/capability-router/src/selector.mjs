@@ -4,6 +4,8 @@ import { getSemanticCache, setSemanticCache } from "./semantic-cache.mjs";
 import { scoreText } from "./text.mjs";
 import { capabilityHash, searchVectorStore } from "./vector-store.mjs";
 
+export const ROUTING_VERSION = "2";
+
 function confidenceFromScore(score, bestScore) {
   if (score <= 0) return 0;
   const relative = bestScore > 0 ? score / bestScore : 0;
@@ -19,11 +21,12 @@ export async function selectCapabilities({
   vectorFile = null,
   vectorDimensions = 256,
   semanticCacheFile = null,
-  semanticCacheThreshold = 0.82
+  semanticCacheThreshold = 0.82,
+  routingVersion = ROUTING_VERSION
 }) {
   const cache = cacheFile ? new CacheStore(cacheFile) : null;
   const capabilitySetHash = stableHash(records.map((record) => [record.id, capabilityHash(record)]).sort());
-  const constraintsHash = stableHash(constraints);
+  const constraintsHash = stableHash({ constraints, routingVersion });
   const key = stableHash({
     request,
     capabilitySetHash,
@@ -31,7 +34,8 @@ export async function selectCapabilities({
     topK,
     vectorFile: Boolean(vectorFile),
     vectorDimensions,
-    semanticCacheFile: Boolean(semanticCacheFile)
+    semanticCacheFile: Boolean(semanticCacheFile),
+    routingVersion
   });
   if (cache) {
     const cached = await cache.getRequest(key);

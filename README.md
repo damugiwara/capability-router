@@ -134,6 +134,12 @@ Run a smoke selection:
 npm run smoke --prefix plugins/capability-router -- "Fix a failing React checkout button test"
 ```
 
+Run routing quality evals:
+
+```powershell
+npm run eval --prefix plugins/capability-router
+```
+
 Register or refresh the Codex MCP config:
 
 ```powershell

@@ -131,6 +131,7 @@ These tools only appear after Codex starts with the `[mcp_servers.capability-rou
 
 ```powershell
 npm test --prefix plugins/capability-router
+npm run eval --prefix plugins/capability-router
 npm run register:mcp --prefix plugins/capability-router
 node plugins/capability-router/mcp/server.mjs --stdio-smoke
 npm run smoke --prefix plugins/capability-router -- "Fix a failing React checkout button test"

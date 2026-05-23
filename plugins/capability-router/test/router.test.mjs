@@ -304,6 +304,72 @@ test("selectCapabilities reports semantic cache hits for similar requests", asyn
   assert.equal(second.recommended[0].name, first.recommended[0].name);
 });
 
+test("selectCapabilities invalidates request cache when routing version changes", async () => {
+  const root = await mkdtemp(path.join(tmpdir(), "capability-routing-version-"));
+  const cacheFile = path.join(root, "request-cache.json");
+  const records = [
+    {
+      id: "tool:image_gen.imagegen",
+      kind: "tool",
+      name: "image_gen.imagegen",
+      description: "Generate or edit raster images from prompts.",
+      capabilities: ["image", "generation"]
+    }
+  ];
+
+  await selectCapabilities({
+    request: "generate an image",
+    records,
+    topK: 1,
+    cacheFile,
+    routingVersion: "old"
+  });
+  const second = await selectCapabilities({
+    request: "generate an image",
+    records,
+    topK: 1,
+    cacheFile,
+    routingVersion: "new"
+  });
+
+  assert.equal(second.cache.hit, false);
+});
+
+test("selectCapabilities prefers source-code audit tools over broad optimizer skills", async () => {
+  const records = [
+    {
+      id: "tool:functions.shell_command",
+      kind: "tool",
+      name: "functions.shell_command",
+      description: "Run PowerShell commands for local filesystem inspection, tests, builds, and command-line tools.",
+      capabilities: ["filesystem", "shell", "execution"]
+    },
+    {
+      id: "tool:functions.apply_patch",
+      kind: "tool",
+      name: "functions.apply_patch",
+      description: "Edit local files using patch hunks for precise code changes.",
+      capabilities: ["filesystem", "editing"]
+    },
+    {
+      id: "skill:os-optimizer",
+      kind: "skill",
+      name: "os-optimizer",
+      description: "Framework-driven audit and optimizer for any markdown vault. Applies improvements to folders and databases.",
+      capabilities: ["filesystem", "editing", "planning", "database"]
+    }
+  ];
+
+  const result = await selectCapabilities({
+    request: "Audit the plugins/capability-router folder for bugs, maintainability issues, missing tests, and improvements",
+    records,
+    topK: 3
+  });
+
+  assert.notEqual(result.recommended[0].name, "os-optimizer");
+  assert.ok(["functions.shell_command", "functions.apply_patch"].includes(result.recommended[0].name));
+});
+
 test("CacheStore avoids rewriting unchanged registry records by file hash", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "capability-cache-"));
   const cache = new CacheStore(path.join(root, "cache.json"));

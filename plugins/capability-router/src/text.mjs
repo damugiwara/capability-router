@@ -72,6 +72,7 @@ export function scoreText(query, record) {
 
 function scoreIntent(query, record, inferred) {
   const source = String(query ?? "").toLowerCase();
+  const recordText = [record.kind, record.name, record.description, ...(record.capabilities ?? [])].join(" ").toLowerCase();
   let boost = 0;
 
   if (inferred.includes("web") && record.kind === "tool" && ["web.open", "web.search_query"].includes(record.name)) {
@@ -79,12 +80,30 @@ function scoreIntent(query, record, inferred) {
   }
 
   if (/\b(edit|modify|patch|fix|repair|implement|source code)\b/.test(source)) {
-    if (record.name === "functions.apply_patch") boost += 3;
-    if (record.name === "functions.shell_command") boost += 1;
+    if (record.name === "functions.apply_patch") boost += 5;
+    if (record.name === "functions.shell_command") boost += 2;
   }
 
   if (/\b(test|build|run|shell|terminal|command)\b/.test(source) && record.name === "functions.shell_command") {
-    boost += 3;
+    boost += 5;
+  }
+
+  if (isLocalCodeEdit(source)) {
+    if (record.name === "functions.apply_patch") boost += 6;
+    if (record.name === "functions.shell_command") boost += 3;
+    if (/\b(lfg|autonomous|pipeline|brainstorm|plan)\b/.test(recordText)) boost -= 4;
+  }
+
+  if (isFocusedCommandTask(source)) {
+    if (record.name === "functions.shell_command") boost += 7;
+    if (record.kind === "skill" && /\b(lfg|autonomous|pipeline|brainstorm|plan)\b/.test(recordText)) boost -= 5;
+  }
+
+  if (isSourceCodeAudit(source)) {
+    if (record.name === "functions.shell_command") boost += 7;
+    if (record.name === "functions.apply_patch") boost += 5;
+    if (/\b(security|semgrep|codeql|review|c-review|scan|audit|bug|test)\b/.test(recordText)) boost += 4;
+    if (/\b(optimizer|operator|vault|database|notes|obsidian)\b/.test(recordText)) boost -= 7;
   }
 
   if (/\b(image|photo|picture|logo)\b/.test(source) && record.name === "image_gen.imagegen") {
@@ -92,4 +111,25 @@ function scoreIntent(query, record, inferred) {
   }
 
   return boost;
+}
+
+function isSourceCodeAudit(source) {
+  return (
+    /\b(audit|review|bugs?|maintainability|missing tests?|improvements?|quality|issues?)\b/.test(source) &&
+    /\b(code|source|repo|repository|project|folder|directory|plugin|package|files?)\b/.test(source)
+  );
+}
+
+function isLocalCodeEdit(source) {
+  return (
+    /\b(edit|modify|patch|fix|repair|implement|change)\b/.test(source) &&
+    /\b(local|code|source|file|component|repo|repository|project|package)\b/.test(source)
+  );
+}
+
+function isFocusedCommandTask(source) {
+  return (
+    /\b(run|execute|inspect|check)\b/.test(source) &&
+    /\b(test|tests|suite|build|lint|command|terminal|package)\b/.test(source)
+  );
 }

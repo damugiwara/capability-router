@@ -6,6 +6,7 @@
     "capability-router-mcp": "./mcp/server.mjs"
   },
   "scripts": {
+    "eval": "node scripts/eval-routing.mjs",
     "register:mcp": "node scripts/register-codex-mcp.mjs",
     "test": "node --test test/*.test.mjs",
     "smoke": "node scripts/smoke-select.mjs"

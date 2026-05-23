@@ -1,0 +1,58 @@
+[
+  {
+    "id": "image-generation",
+    "category": "image",
+    "query": "Generate an image of a futuristic sneaker product mockup",
+    "expectedAny": ["tool:image_gen.imagegen"],
+    "mustNotTop1": []
+  },
+  {
+    "id": "current-web-research",
+    "category": "web",
+    "query": "Research current OpenAI API pricing and cite sources",
+    "expectedAny": ["tool:web.search_query", "tool:web.open"],
+    "mustNotTop1": []
+  },
+  {
+    "id": "local-code-edit",
+    "category": "code",
+    "query": "Edit the local React checkout component to fix the failing button test",
+    "expectedAny": ["tool:functions.apply_patch", "tool:functions.shell_command"],
+    "mustNotTop1": ["tool:image_gen.imagegen"]
+  },
+  {
+    "id": "run-tests",
+    "category": "code",
+    "query": "Run the focused test suite for this package and inspect failures",
+    "expectedAny": ["tool:functions.shell_command"],
+    "mustNotTop1": []
+  },
+  {
+    "id": "source-code-audit",
+    "category": "code-review",
+    "query": "Audit the plugins/capability-router folder for bugs, maintainability issues, missing tests, and improvements",
+    "expectedAny": ["tool:functions.shell_command", "tool:functions.apply_patch"],
+    "mustNotTop1": ["skill:os-optimizer", "skill:os-operator"]
+  },
+  {
+    "id": "supabase-schema",
+    "category": "database",
+    "query": "Inspect my Supabase tables and suggest a safer Postgres schema",
+    "expectedAny": ["plugin:supabase", "skill:supabase", "skill:supabase-postgres-best-practices"],
+    "mustNotTop1": ["tool:image_gen.imagegen"]
+  },
+  {
+    "id": "spreadsheet-analysis",
+    "category": "spreadsheet",
+    "query": "Analyze this spreadsheet and create a chart of monthly revenue",
+    "expectedAny": ["plugin:spreadsheets", "skill:Spreadsheets"],
+    "mustNotTop1": ["tool:image_gen.imagegen"]
+  },
+  {
+    "id": "presentation-deck",
+    "category": "presentation",
+    "query": "Create a PowerPoint deck summarizing the quarterly roadmap",
+    "expectedAny": ["plugin:presentations", "skill:Presentations"],
+    "mustNotTop1": ["tool:functions.shell_command"]
+  }
+]
