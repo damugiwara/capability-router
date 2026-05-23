@@ -18,6 +18,14 @@ The router scans available Codex capabilities, builds a compact local registry, 
 
 See [USAGE.md](USAGE.md) for full installation instructions, including repo marketplace and personal local plugin setup.
 
+After installing the plugin, register its MCP server in Codex:
+
+```powershell
+npm run register:mcp --prefix plugins/capability-router
+```
+
+Then restart Codex or open a new Codex session. The slash command can appear before the MCP server is registered, but the router cannot call `capability_router.select` until the MCP server is listed under `[mcp_servers]` in `~/.codex/config.toml`.
+
 After installing, invoke the router with:
 
 ```text
@@ -76,19 +84,20 @@ If a command does not appear immediately in Codex, restart the Codex app or relo
 
 ## How It Works
 
-1. Codex loads the plugin metadata, slash commands, MCP server config, and the `capability-router` skill.
-2. When you invoke `/capability`, `/capability-router`, or explicitly ask for routing, Codex calls the MCP tool `capability_router.select`.
-3. The MCP server scans installed capability metadata:
+1. Codex loads the plugin metadata, slash commands, and the `capability-router` skill.
+2. The MCP registration in `~/.codex/config.toml` starts the local router server and exposes `capability_router.select`.
+3. When you invoke `/capability`, `/capability-router`, or explicitly ask for routing, Codex calls the MCP tool `capability_router.select`.
+4. The MCP server scans installed capability metadata:
    - skill frontmatter from `SKILL.md`
    - plugin manifests from `.codex-plugin/plugin.json`
    - bundled known Codex tool metadata from `data/builtin-capabilities.json`
-4. The scanner normalizes each item into a compact capability record.
-5. The local embedding layer turns capability records and the user request into deterministic hashed vectors.
-6. The vector store persists capability vectors in `data/vectors.json` and retrieves nearest matches with cosine similarity.
-7. The semantic result cache stores prior selections in `data/semantic-cache.json` and reuses them for similar requests when the capability set and constraints are unchanged.
-8. The selector combines vector similarity with lexical scoring, inferred intent tags, and task-specific boosts.
-9. The policy layer applies soft masking constraints such as disallowed network access.
-10. The MCP server returns only the top relevant candidates, confidence scores, reasons, and context-savings metadata.
+5. The scanner normalizes each item into a compact capability record.
+6. The local embedding layer turns capability records and the user request into deterministic hashed vectors.
+7. The vector store persists capability vectors in `data/vectors.json` and retrieves nearest matches with cosine similarity.
+8. The semantic result cache stores prior selections in `data/semantic-cache.json` and reuses them for similar requests when the capability set and constraints are unchanged.
+9. The selector combines vector similarity with lexical scoring, inferred intent tags, and task-specific boosts.
+10. The policy layer applies soft masking constraints such as disallowed network access.
+11. The MCP server returns only the top relevant candidates, confidence scores, reasons, and context-savings metadata.
 
 ## Why It Reduces Token Usage
 
@@ -123,6 +132,12 @@ Run a smoke selection:
 
 ```powershell
 npm run smoke --prefix plugins/capability-router -- "Fix a failing React checkout button test"
+```
+
+Register or refresh the Codex MCP config:
+
+```powershell
+npm run register:mcp --prefix plugins/capability-router
 ```
 
 Run the context benchmark:

@@ -30,8 +30,14 @@ To install in another Codex:
 1. Clone the repository.
 2. Add or open `.agents/plugins/marketplace.json` in Codex.
 3. Install or enable `capability-router`.
-4. Restart Codex or reload plugins.
-5. Type `/capability` or `/capability-router` in the composer.
+4. Register the MCP server:
+
+   ```powershell
+   npm run register:mcp --prefix plugins/capability-router
+   ```
+
+5. Restart Codex or reload plugins.
+6. Type `/capability` or `/capability-router` in the composer.
 
 For a personal local install, copy this folder to:
 
@@ -50,6 +56,14 @@ pointing to:
 ```text
 ./plugins/capability-router
 ```
+
+Then register the MCP server from the personal plugin copy:
+
+```powershell
+node "$HOME\plugins\capability-router\scripts\register-codex-mcp.mjs"
+```
+
+If the slash command appears but `capability_router.select` is not exposed, the command is installed but the MCP server is not active in the current Codex session. Register the MCP server and restart Codex.
 
 ## Slash Commands
 
@@ -82,6 +96,7 @@ This is a KV-cache-like router optimization. It is not transformer KV cache.
 
 ```powershell
 npm test --prefix plugins/capability-router
+npm run register:mcp --prefix plugins/capability-router
 npm run smoke --prefix plugins/capability-router -- "Fix a failing React checkout button test"
 node plugins/capability-router/scripts/benchmark-context.mjs "Fix a failing React checkout button test by inspecting local files and running the focused test"
 ```

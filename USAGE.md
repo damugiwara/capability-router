@@ -19,15 +19,25 @@
 
 3. Install or enable `capability-router` from that marketplace.
 
-4. Restart Codex or reload plugins so Codex indexes the plugin metadata, skill, MCP server, and slash commands.
+4. Register the MCP server in Codex:
 
-5. Confirm the plugin root exists:
+   ```powershell
+   npm run register:mcp --prefix plugins/capability-router
+   ```
+
+   This writes a managed `[mcp_servers.capability-router]` block to `$HOME\.codex\config.toml`.
+
+5. Restart Codex or reload plugins so Codex indexes the plugin metadata, skill, MCP server, and slash commands.
+
+6. Confirm the plugin root exists:
 
    ```text
    plugins/capability-router
    ```
 
-6. Type `/capability` in the Codex composer. It should appear as a slash command.
+7. Type `/capability` in the Codex composer. It should appear as a slash command.
+
+If `/capability` appears but Codex says `capability_router.select` is not exposed, the slash command is installed but the MCP server is not registered in the active Codex session. Run the registration command above and restart Codex.
 
 ## Install Manually As A Personal Plugin
 
@@ -56,6 +66,12 @@ Then add this entry to `$HOME\.agents\plugins\marketplace.json`:
 ```
 
 After editing the marketplace, restart Codex or reload plugins.
+
+Then register the MCP server from the personal plugin copy:
+
+```powershell
+node "$HOME\plugins\capability-router\scripts\register-codex-mcp.mjs"
+```
 
 The slash commands are indexed from:
 
@@ -109,10 +125,13 @@ Use Capability Router to refresh its capability index.
 - `capability_router.list_capabilities`: list indexed records
 - `capability_router.explain`: explain the routing decision
 
+These tools only appear after Codex starts with the `[mcp_servers.capability-router]` entry in `$HOME\.codex\config.toml`.
+
 ## Test Locally
 
 ```powershell
 npm test --prefix plugins/capability-router
+npm run register:mcp --prefix plugins/capability-router
 node plugins/capability-router/mcp/server.mjs --stdio-smoke
 npm run smoke --prefix plugins/capability-router -- "Fix a failing React checkout button test"
 ```
