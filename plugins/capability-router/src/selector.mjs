@@ -4,7 +4,7 @@ import { getSemanticCache, setSemanticCache } from "./semantic-cache.mjs";
 import { scoreText } from "./text.mjs";
 import { capabilityHash, searchVectorStore } from "./vector-store.mjs";
 
-export const ROUTING_VERSION = "2";
+export const ROUTING_VERSION = "3";
 
 function confidenceFromScore(score, bestScore) {
   if (score <= 0) return 0;

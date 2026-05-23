@@ -140,6 +140,8 @@ Run routing quality evals:
 npm run eval --prefix plugins/capability-router
 ```
 
+The eval suite covers web research, browser automation, image work, local code edits, test execution, security, Supabase, spreadsheets, documents, presentations, OpenAI docs, plugin/skill authoring, GitHub CLI, planning, frontend, iOS, fuzzing, and router-specific requests.
+
 Register or refresh the Codex MCP config:
 
 ```powershell

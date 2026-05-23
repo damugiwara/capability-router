@@ -136,3 +136,5 @@ npm run register:mcp --prefix plugins/capability-router
 node plugins/capability-router/mcp/server.mjs --stdio-smoke
 npm run smoke --prefix plugins/capability-router -- "Fix a failing React checkout button test"
 ```
+
+`npm run eval` checks routing quality across multiple task families, not only a single benchmark query.

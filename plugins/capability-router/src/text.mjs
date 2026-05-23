@@ -21,6 +21,8 @@ const STOP_WORDS = new Set([
   "the",
   "this",
   "to",
+  "set",
+  "up",
   "use",
   "using",
   "when",
@@ -79,6 +81,17 @@ function scoreIntent(query, record, inferred) {
     boost += source.includes("search") || source.includes("find") ? 3 : 4;
   }
 
+  if (isCurrentWebResearch(source)) {
+    if (record.name === "web.search_query") boost += 10;
+    if (record.name === "web.open") boost += 6;
+    if (record.kind === "skill" && /\b(docs?|documentation|openai-docs)\b/.test(recordText)) boost -= 4;
+  }
+
+  if (isImageTask(source)) {
+    if (record.name === "image_gen.imagegen" || record.name === "imagegen") boost += 9;
+    if (record.name === "functions.apply_patch") boost -= 8;
+  }
+
   if (/\b(edit|modify|patch|fix|repair|implement|source code)\b/.test(source)) {
     if (record.name === "functions.apply_patch") boost += 5;
     if (record.name === "functions.shell_command") boost += 2;
@@ -99,6 +112,21 @@ function scoreIntent(query, record, inferred) {
     if (record.kind === "skill" && /\b(lfg|autonomous|pipeline|brainstorm|plan)\b/.test(recordText)) boost -= 5;
   }
 
+  if (isLocalDocumentationEdit(source)) {
+    if (record.name === "functions.apply_patch") boost += 8;
+    if (record.name === "functions.shell_command") boost += 3;
+    if (!source.includes("figma") && /\bfigma\b/.test(recordText)) boost -= 8;
+    if (/\b(strategy|planning|threat-model)\b/.test(recordText)) boost -= 3;
+  }
+
+  if (isSecurityScan(source)) {
+    if (/\b(codex-security|security-scan|insecure-defaults|semgrep|codeql|supply-chain|audit-prep)\b/.test(recordText)) {
+      boost += 9;
+    }
+    if (record.name === "functions.shell_command") boost -= 4;
+    if (/\b(optimizer|operator|vault|obsidian)\b/.test(recordText)) boost -= 7;
+  }
+
   if (isSourceCodeAudit(source)) {
     if (record.name === "functions.shell_command") boost += 7;
     if (record.name === "functions.apply_patch") boost += 5;
@@ -106,11 +134,39 @@ function scoreIntent(query, record, inferred) {
     if (/\b(optimizer|operator|vault|database|notes|obsidian)\b/.test(recordText)) boost -= 7;
   }
 
-  if (/\b(image|photo|picture|logo)\b/.test(source) && record.name === "image_gen.imagegen") {
-    boost += 4;
+  if (isOpenAiDocsTask(source)) {
+    if (record.name === "openai-docs") boost += 11;
+    if (record.name === "chatgpt-apps") boost += 4;
+    if (record.name === "capability-router" && !source.includes("capability router")) boost -= 8;
+  }
+
+  if (isGitHubCliTask(source)) {
+    if (record.name === "gh-cli") boost += 11;
+    if (record.name === "functions.shell_command") boost += 7;
+    if (record.name === "ce-commit-push-pr") boost += 3;
+    if (record.name === "yeet") boost -= 8;
+  }
+
+  if (isFuzzingTask(source)) {
+    if (/\b(aflpp|afl\+\+|libfuzzer|cargo-fuzz|harness-writing|fuzzing)\b/.test(recordText)) boost += 12;
+    if (/\b(afl\+\+|aflpp)\b/.test(source) && record.name === "aflpp") boost += 16;
+    if (/\bc\b/.test(source) && /\b(libfuzzer|harness-writing)\b/.test(recordText)) boost += 4;
+    if (record.name === "genotoxic") boost -= 6;
+    if (/\b(deploy|operator|optimizer|vault|strategy)\b/.test(recordText)) boost -= 8;
   }
 
   return boost;
+}
+
+function isImageTask(source) {
+  return /\b(image|photo|picture|logo|mockup|background|sneaker|raster)\b/.test(source);
+}
+
+function isCurrentWebResearch(source) {
+  return (
+    /\b(current|latest|recent|today|pricing|price|sources?|cite|citations?)\b/.test(source) &&
+    /\b(research|search|look up|find|pricing|price|sources?|cite|citations?)\b/.test(source)
+  );
 }
 
 function isSourceCodeAudit(source) {
@@ -132,4 +188,27 @@ function isFocusedCommandTask(source) {
     /\b(run|execute|inspect|check)\b/.test(source) &&
     /\b(test|tests|suite|build|lint|command|terminal|package)\b/.test(source)
   );
+}
+
+function isLocalDocumentationEdit(source) {
+  return (
+    /\b(create|edit|write|add|update)\b/.test(source) &&
+    /\b(readme|repository|repo|install|section|markdown|documentation|docs)\b/.test(source)
+  );
+}
+
+function isSecurityScan(source) {
+  return /\b(security|insecure|vulnerab|semgrep|codeql|scan|hardcoded|secret|api key)\b/.test(source);
+}
+
+function isOpenAiDocsTask(source) {
+  return /\b(openai|chatgpt|responses api|assistants api|agents sdk)\b/.test(source);
+}
+
+function isGitHubCliTask(source) {
+  return /\b(github|gh)\b/.test(source) && /\b(cli|issues?|pull request|pr|repo)\b/.test(source);
+}
+
+function isFuzzingTask(source) {
+  return /\b(fuzz|fuzzing|afl\+\+|aflpp|libfuzzer|harness)\b/.test(source);
 }

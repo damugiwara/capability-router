@@ -3,15 +3,36 @@
     "id": "image-generation",
     "category": "image",
     "query": "Generate an image of a futuristic sneaker product mockup",
-    "expectedAny": ["tool:image_gen.imagegen"],
-    "mustNotTop1": []
+    "expectedAny": ["tool:image_gen.imagegen", "skill:imagegen"],
+    "mustNotTop1": ["tool:functions.shell_command"]
+  },
+  {
+    "id": "image-editing",
+    "category": "image",
+    "query": "Edit the attached product photo to remove the background",
+    "expectedAny": ["tool:image_gen.imagegen", "skill:imagegen"],
+    "mustNotTop1": ["tool:functions.apply_patch"]
   },
   {
     "id": "current-web-research",
     "category": "web",
     "query": "Research current OpenAI API pricing and cite sources",
     "expectedAny": ["tool:web.search_query", "tool:web.open"],
-    "mustNotTop1": []
+    "mustNotTop1": ["skill:ce-slack-research"]
+  },
+  {
+    "id": "open-specific-url",
+    "category": "web",
+    "query": "Open https://example.com and summarize the page",
+    "expectedAny": ["tool:web.open", "tool:web.search_query"],
+    "mustNotTop1": ["tool:image_gen.imagegen"]
+  },
+  {
+    "id": "browser-localhost",
+    "category": "browser",
+    "query": "Open localhost:3000, click the login button, and take a screenshot",
+    "expectedAny": ["plugin:browser", "skill:browser"],
+    "mustNotTop1": ["tool:web.search_query"]
   },
   {
     "id": "local-code-edit",
@@ -21,18 +42,39 @@
     "mustNotTop1": ["tool:image_gen.imagegen"]
   },
   {
+    "id": "create-local-file",
+    "category": "code",
+    "query": "Create a README section in this repository explaining the install steps",
+    "expectedAny": ["tool:functions.apply_patch", "tool:functions.shell_command"],
+    "mustNotTop1": ["plugin:presentations"]
+  },
+  {
     "id": "run-tests",
     "category": "code",
     "query": "Run the focused test suite for this package and inspect failures",
     "expectedAny": ["tool:functions.shell_command"],
-    "mustNotTop1": []
+    "mustNotTop1": ["skill:lfg"]
   },
   {
     "id": "source-code-audit",
     "category": "code-review",
     "query": "Audit the plugins/capability-router folder for bugs, maintainability issues, missing tests, and improvements",
-    "expectedAny": ["tool:functions.shell_command", "tool:functions.apply_patch"],
+    "expectedAny": ["tool:functions.shell_command", "tool:functions.apply_patch", "skill:ce-code-review", "skill:security-scan"],
     "mustNotTop1": ["skill:os-optimizer", "skill:os-operator"]
+  },
+  {
+    "id": "security-scan",
+    "category": "security",
+    "query": "Run a security scan of this repo and look for insecure defaults",
+    "expectedAny": ["plugin:codex-security", "skill:security-scan", "skill:insecure-defaults", "skill:semgrep"],
+    "mustNotTop1": ["skill:os-optimizer"]
+  },
+  {
+    "id": "semgrep-rule",
+    "category": "security",
+    "query": "Create a Semgrep rule to detect hardcoded API keys in JavaScript",
+    "expectedAny": ["skill:semgrep-rule-creator", "skill:semgrep"],
+    "mustNotTop1": ["tool:web.search_query"]
   },
   {
     "id": "supabase-schema",
@@ -49,10 +91,80 @@
     "mustNotTop1": ["tool:image_gen.imagegen"]
   },
   {
+    "id": "document-editing",
+    "category": "document",
+    "query": "Create and edit a Word document with tracked changes",
+    "expectedAny": ["plugin:documents", "skill:documents"],
+    "mustNotTop1": ["plugin:spreadsheets"]
+  },
+  {
     "id": "presentation-deck",
     "category": "presentation",
     "query": "Create a PowerPoint deck summarizing the quarterly roadmap",
     "expectedAny": ["plugin:presentations", "skill:Presentations"],
     "mustNotTop1": ["tool:functions.shell_command"]
+  },
+  {
+    "id": "openai-api-docs",
+    "category": "docs",
+    "query": "Explain how to use the OpenAI Responses API with tools",
+    "expectedAny": ["skill:openai-docs"],
+    "mustNotTop1": ["tool:image_gen.imagegen"]
+  },
+  {
+    "id": "create-codex-plugin",
+    "category": "plugin-authoring",
+    "query": "Create a new Codex plugin with a skill and MCP server",
+    "expectedAny": ["skill:plugin-creator", "skill:skill-creator"],
+    "mustNotTop1": ["plugin:spreadsheets"]
+  },
+  {
+    "id": "create-codex-skill",
+    "category": "skill-authoring",
+    "query": "Write a new Codex skill for reviewing Terraform modules",
+    "expectedAny": ["skill:skill-creator", "skill:writing-skills"],
+    "mustNotTop1": ["tool:web.search_query"]
+  },
+  {
+    "id": "github-cli",
+    "category": "github",
+    "query": "Use GitHub CLI to list issues and open a pull request",
+    "expectedAny": ["skill:gh-cli", "tool:functions.shell_command"],
+    "mustNotTop1": ["tool:image_gen.imagegen"]
+  },
+  {
+    "id": "planning",
+    "category": "planning",
+    "query": "Create a step-by-step implementation plan for a multi-stage refactor",
+    "expectedAny": ["tool:functions.update_plan", "skill:ce-plan", "skill:writing-plans"],
+    "mustNotTop1": ["tool:image_gen.imagegen"]
+  },
+  {
+    "id": "frontend-design",
+    "category": "frontend",
+    "query": "Improve the frontend design of this React dashboard and verify it in the browser",
+    "expectedAny": ["skill:ce-frontend-design", "plugin:browser", "skill:browser"],
+    "mustNotTop1": ["plugin:spreadsheets"]
+  },
+  {
+    "id": "xcode-tests",
+    "category": "ios",
+    "query": "Build and test the iOS app on the simulator with Xcode",
+    "expectedAny": ["skill:ce-test-xcode"],
+    "mustNotTop1": ["tool:web.search_query"]
+  },
+  {
+    "id": "fuzzing",
+    "category": "security",
+    "query": "Set up fuzzing for this C library with AFL++",
+    "expectedAny": ["skill:aflpp", "skill:libfuzzer", "skill:harness-writing"],
+    "mustNotTop1": ["plugin:documents"]
+  },
+  {
+    "id": "capability-routing",
+    "category": "router",
+    "query": "Use Capability Router to choose the best tool for this task",
+    "expectedAny": ["plugin:capability-router", "skill:capability-router"],
+    "mustNotTop1": ["plugin:spreadsheets"]
   }
 ]

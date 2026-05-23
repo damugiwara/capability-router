@@ -102,6 +102,8 @@ npm run smoke --prefix plugins/capability-router -- "Fix a failing React checkou
 node plugins/capability-router/scripts/benchmark-context.mjs "Fix a failing React checkout button test by inspecting local files and running the focused test"
 ```
 
+The routing eval suite is intentionally cross-category so broad skills cannot silently win only because their descriptions contain generic words.
+
 ## Limitations
 
 This plugin performs soft masking and cache-backed local vector retrieval. It cannot force Codex to hide native tools, and it cannot access transformer-level KV cache unless Codex exposes such a runtime hook.
